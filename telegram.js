@@ -70,6 +70,7 @@ async function syncBotProfile(bot) {
   tasks.push(bot.telegram.setMyCommands([
     { command: 'start', description: 'ចាប់ផ្តើម' },
     { command: 'catalog', description: 'មើលរឿងវែង' },
+    { command: 'myid', description: 'មើល Telegram Chat ID របស់ខ្ញុំ' },
     { command: 'help', description: 'របៀបប្រើ' }
   ]));
 
@@ -99,9 +100,15 @@ function startTelegram() {
   });
 
   bot.command('catalog', showCatalog);
+  bot.command('myid', async (ctx) => {
+    await ctx.reply(
+      `🆔 Telegram Chat ID របស់អ្នក៖\n<code>${ctx.chat.id}</code>\n\nCopy លេខនេះទៅ Render → Environment → TELEGRAM_STORAGE_CHAT_ID។`,
+      { parse_mode: 'HTML' }
+    );
+  });
   bot.command('help', async (ctx) => {
     await ctx.reply(
-      `💬 <b>របៀបប្រើ ${BRAND_NAME}</b>\n\n1) ចង់មើលរឿងវែង → ចុច “រឿងវែងក្នុង Telegram”\n2) ចង់មើលរឿងខ្លី → ចុច “រឿងខ្លីនៅ Website”\n3) Admin អាចកំណត់រឿងនីមួយៗថាទៅ Web ឬ Telegram។`,
+      `💬 <b>របៀបប្រើ ${BRAND_NAME}</b>\n\n1) ចង់មើលរឿងវែង → ចុច “រឿងវែងក្នុង Telegram”\n2) ចង់មើលរឿងខ្លី → ចុច “រឿងខ្លីនៅ Website”\n3) Admin អាច Upload Cover/Trailer/Full Video ពី Web ហើយ File ត្រូវបានរក្សាទុកក្នុង Telegram។\n4) វាយ /myid ដើម្បីយក Chat ID សម្រាប់ Telegram Storage។`,
       { parse_mode: 'HTML', ...mainMenu() }
     );
   });
