@@ -9,6 +9,10 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20
+      - key: BOT_TOKEN
+        sync: false
+      - key: PUBLIC_BASE_URL
+        value: https://idramame.onrender.com
       - key: BAKONG_ACCOUNT_ID
         sync: false
       - key: BAKONG_MERCHANT_NAME
