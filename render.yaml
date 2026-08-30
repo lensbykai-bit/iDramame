@@ -15,6 +15,8 @@ services:
         sync: false
       - key: TELEGRAM_BOT_USERNAME
         value: iDramaAiBot
+      - key: TELEGRAM_STORAGE_CHAT_ID
+        sync: false
       - key: PUBLIC_BASE_URL
         value: https://idramaai.onrender.com
       - key: BAKONG_ACCOUNT_ID
