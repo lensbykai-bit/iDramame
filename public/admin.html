@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="km">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>iDrama.me Admin</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="glow glow-a"></div><div class="glow glow-b"></div>
+  <header class="topbar">
+    <a class="brand" href="/"><span class="brand-mark">iD</span><span><strong>iDrama</strong><em>.me</em></span></a>
+    <span class="country-pill">ADMIN</span>
+  </header>
+
+  <main class="admin-main">
+    <section id="loginPanel" class="admin-panel admin-login">
+      <div class="eyebrow">SECURE ADMIN</div>
+      <h1>គ្រប់គ្រងរឿង</h1>
+      <p class="muted">បញ្ចូល Admin Password ដែលបានកំណត់ក្នុង Render Environment។</p>
+      <input id="password" class="admin-input" type="password" autocomplete="current-password" placeholder="Admin password" />
+      <button id="loginBtn" class="primary-btn admin-wide">ចូល Admin</button>
+      <div id="loginStatus" class="status" hidden></div>
+    </section>
+
+    <section id="dashboard" hidden>
+      <div class="admin-head">
+        <div><div class="eyebrow">WEB-ONLY CMS</div><h1>រឿងក្នុង iDrama.me</h1></div>
+        <div class="admin-actions"><a class="ghost-btn" href="/" target="_blank">បើក Website</a><button id="logoutBtn" class="ghost-btn">ចាកចេញ</button></div>
+      </div>
+
+      <section class="admin-panel">
+        <h2 id="formTitle">➕ បន្ថែមរឿងថ្មី</h2>
+        <form id="storyForm" class="admin-form">
+          <input id="storyId" type="hidden" />
+          <label>ចំណងជើង<input id="title" class="admin-input" required placeholder="ឈ្មោះរឿង" /></label>
+          <label>Preview / Description<textarea id="preview" class="admin-input admin-textarea" placeholder="អត្ថបទពិពណ៌នារឿង..."></textarea></label>
+          <label>តម្លៃ (៛)<input id="price" class="admin-input" type="number" min="0" step="100" value="5000" required /></label>
+          <label>Cover Image URL<input id="coverUrl" class="admin-input" type="url" placeholder="https://.../cover.jpg" /></label>
+          <label>Trailer Video URL<input id="trailerUrl" class="admin-input" type="url" placeholder="https://.../trailer.mp4" /></label>
+          <label>Full Video URL <span class="muted">(មិនបង្ហាញក្នុង Catalog)</span><input id="fullUrl" class="admin-input" type="url" placeholder="https://.../full-video.mp4" /></label>
+          <div class="admin-actions">
+            <button class="primary-btn" type="submit">💾 រក្សាទុក</button>
+            <button id="cancelEdit" class="ghost-btn" type="button" hidden>បោះបង់កែ</button>
+          </div>
+          <div id="formStatus" class="status" hidden></div>
+        </form>
+      </section>
+
+      <section class="section">
+        <div class="section-head"><div><div class="eyebrow">CATALOG</div><h2>រឿងទាំងអស់</h2></div><span id="adminCount" class="muted"></span></div>
+        <div id="adminStories" class="admin-story-list"><div class="loading">កំពុងផ្ទុក…</div></div>
+      </section>
+
+      <section class="security-card">
+        <div class="security-icon">ℹ️</div>
+        <div><h3>Video Storage</h3><p>Admin នេះរក្សា URL របស់ Cover, Trailer និង Full Video។ Full Video URL មិនត្រូវបានផ្ញើទៅ Catalog សាធារណៈទេ; Website បញ្ជូនវាតាម Signed Watch Link បន្ទាប់ពីបង់ជោគជ័យ។</p></div>
+      </section>
+    </section>
+  </main>
+  <script src="/admin.js" defer></script>
+</body>
+</html>
