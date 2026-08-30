@@ -1,24 +1,25 @@
 const $ = (q, root=document) => root.querySelector(q);
+const BRAND_NAME = 'ខ្ញុំចង់មើលរឿងអេអាយ';
 const modal = $('#modal');
 const modalBody = $('#modalBody');
 let stories = [];
 let activeOrder = null;
 
 function money(v){ return `${Number(v).toLocaleString('en-US')}៛`; }
-function esc(v=''){ return String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+function esc(v=''){ return String(v).replace(/[&<>'\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c])); }
 function openModal(){ modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); document.body.style.overflow='hidden'; }
 function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); document.body.style.overflow=''; activeOrder=null; }
 modal.addEventListener('click', e => { if(e.target.matches('[data-close]')) closeModal(); });
 document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
 
 function storyCard(s){
-  const media = s.cover_url ? `<img src="${esc(s.cover_url)}" alt="${esc(s.title)}" loading="lazy">` : '';
+  const media = s.cover_url ? `<img src="${esc(s.cover_url)}" alt="${esc(s.title)}" loading="lazy">` : '<div class="poster-fallback">AI</div>';
   return `<article class="story-card">
     <div class="poster">${media}</div>
     <div class="card-body">
       <h3>${esc(s.title)}</h3>
       <div class="preview-text">${esc(s.preview)}</div>
-      <div class="card-bottom"><div class="price">${money(s.price_khr)}</div><button class="card-btn" data-story="${esc(s.id)}">មើល Preview</button></div>
+      <div class="card-bottom"><div class="price">${money(s.price_khr)}</div><button class="card-btn" data-story="${esc(s.id)}">មើល Trailer</button></div>
     </div>
   </article>`;
 }
@@ -44,13 +45,13 @@ $('#storyGrid').addEventListener('click', e => {
 function showStory(id){
   const s = stories.find(x=>x.id===id); if(!s) return;
   modalBody.innerHTML = `
-    <div class="eyebrow">PREVIEW</div>
+    <div class="eyebrow">TRAILER / PREVIEW</div>
     <h2 class="modal-title">${esc(s.title)}</h2>
-    ${s.preview_video_url ? `<video controls playsinline style="width:100%;border-radius:16px;margin:10px 0" src="${esc(s.preview_video_url)}"></video>` : ''}
+    ${s.preview_video_url ? `<video controls playsinline controlsList="nodownload" style="width:100%;border-radius:16px;margin:10px 0" src="${esc(s.preview_video_url)}"></video>` : '<div class="status">🎞️ រឿងនេះមិនទាន់មាន Trailer ទេ។</div>'}
     <p class="modal-preview">${esc(s.preview)}</p>
     <div class="amount-row"><span class="muted">តម្លៃរឿងពេញ</span><strong class="price">${money(s.price_khr)}</strong></div>
     <button class="buy-btn" id="buyBtn" style="width:100%;margin-top:18px">💳 ទិញតាម Bakong KHQR</button>
-    <p class="small">បង់នៅលើ «ខ្ញុំចង់មើលរឿងអេអាយ»។ ពេល Payment ត្រូវបានបញ្ជាក់ Website នឹងបើក Watch Page។</p>`;
+    <p class="small">ការទិញ និងការមើលរឿងពេញធ្វើនៅលើ ${BRAND_NAME}។ បង់ជោគជ័យរួច Website នឹងបើក Watch Page សម្រាប់អ្នក។</p>`;
   openModal();
   $('#buyBtn').addEventListener('click', () => createOrder(s.id));
 }
