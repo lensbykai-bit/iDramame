@@ -23,6 +23,14 @@ function longStories() {
   return loadStories().filter((story) => story.placement === 'telegram');
 }
 
+function moneyKHR(amount) {
+  return `${Number(amount || 0).toLocaleString('en-US')}៛`;
+}
+
+function escHtml(value='') {
+  return String(value).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+}
+
 function mainMenu() {
   return Markup.inlineKeyboard([
     [Markup.button.callback('🎞️ រឿងវែងក្នុង Telegram', 'catalog')],
@@ -40,7 +48,10 @@ async function showCatalog(ctx) {
     );
   }
 
-  const rows = stories.map((story) => {
+  const rows = stories.map((story, index) => {
+    if (story.full_video_file_id || story.preview_video_file_id || story.cover_file_id) {
+      return [Markup.button.callback(`▶️ ${story.title}`, `story:${index}`)];
+    }
     if (story.telegram_url) {
       return [Markup.button.url(`▶️ ${story.title}`, story.telegram_url)];
     }
@@ -49,9 +60,71 @@ async function showCatalog(ctx) {
   rows.push([Markup.button.url('🌐 មើលរឿងខ្លីនៅ Website', PUBLIC_BASE_URL)]);
 
   await ctx.reply(
-    `🎞️ <b>រឿងវែង — ${BRAND_NAME}</b>\n\nជ្រើសរឿងខាងក្រោម ដើម្បីមើលក្នុង Telegram។ រឿងខ្លីស្ថិតនៅ Website។`,
+    `🎞️ <b>រឿងវែង — ${BRAND_NAME}</b>\n\nជ្រើសរឿងខាងក្រោម ដើម្បីមើល Cover, Trailer និង Full Movie ក្នុង Telegram។`,
     { parse_mode: 'HTML', ...Markup.inlineKeyboard(rows) }
   );
+}
+
+async function sendVideoOrDocument(ctx, fileId, caption) {
+  if (!fileId) return false;
+  try {
+    await ctx.replyWithVideo(fileId, { caption, supports_streaming: true });
+    return true;
+  } catch (videoError) {
+    try {
+      await ctx.replyWithDocument(fileId, { caption });
+      return true;
+    } catch (documentError) {
+      console.error('[telegram-media-send]', videoError.message, '|', documentError.message);
+      throw documentError;
+    }
+  }
+}
+
+async function showStoryDetails(ctx, index) {
+  const stories = longStories();
+  const story = stories[index];
+  if (!story) return ctx.reply('រកមិនឃើញរឿងនេះទេ។', mainMenu());
+
+  const caption = `🎬 <b>${escHtml(story.title)}</b>\n💰 ${moneyKHR(story.price_khr)}\n\n${escHtml(story.preview || '')}`;
+  const buttons = [];
+  if (story.preview_video_file_id) buttons.push([Markup.button.callback('🎞️ មើល Trailer', `trailer:${index}`)]);
+  if (story.full_video_file_id) buttons.push([Markup.button.callback('▶️ មើល Full Movie', `full:${index}`)]);
+  if (story.telegram_url) buttons.push([Markup.button.url('🔗 បើក Telegram Post ចាស់', story.telegram_url)]);
+  buttons.push([Markup.button.url('🌐 រឿងខ្លីនៅ Website', PUBLIC_BASE_URL)]);
+
+  if (story.cover_file_id) {
+    try {
+      await ctx.replyWithPhoto(story.cover_file_id, {
+        caption,
+        parse_mode: 'HTML',
+        ...Markup.inlineKeyboard(buttons)
+      });
+      return;
+    } catch (error) {
+      console.error('[telegram-cover]', error.message);
+    }
+  }
+
+  await ctx.reply(caption, { parse_mode: 'HTML', ...Markup.inlineKeyboard(buttons) });
+}
+
+async function sendTrailer(ctx, index) {
+  const story = longStories()[index];
+  if (!story?.preview_video_file_id) {
+    return ctx.answerCbQuery('រឿងនេះមិនទាន់មាន Trailer ទេ។', { show_alert: true });
+  }
+  await ctx.answerCbQuery('កំពុងផ្ញើ Trailer…');
+  await sendVideoOrDocument(ctx, story.preview_video_file_id, `🎞️ Trailer • ${story.title}`);
+}
+
+async function sendFullMovie(ctx, index) {
+  const story = longStories()[index];
+  if (!story?.full_video_file_id) {
+    return ctx.answerCbQuery('រឿងនេះមិនទាន់មាន Full Movie ទេ។', { show_alert: true });
+  }
+  await ctx.answerCbQuery('កំពុងផ្ញើ Full Movie…');
+  await sendVideoOrDocument(ctx, story.full_video_file_id, `🎬 ${story.title} • Full Movie`);
 }
 
 async function syncBotProfile(bot) {
@@ -108,7 +181,7 @@ function startTelegram() {
   });
   bot.command('help', async (ctx) => {
     await ctx.reply(
-      `💬 <b>របៀបប្រើ ${BRAND_NAME}</b>\n\n1) ចង់មើលរឿងវែង → ចុច “រឿងវែងក្នុង Telegram”\n2) ចង់មើលរឿងខ្លី → ចុច “រឿងខ្លីនៅ Website”\n3) Admin អាច Upload Cover/Trailer/Full Video ពី Web ហើយ File ត្រូវបានរក្សាទុកក្នុង Telegram។\n4) វាយ /myid ដើម្បីយក Chat ID សម្រាប់ Telegram Storage។`,
+      `💬 <b>របៀបប្រើ ${BRAND_NAME}</b>\n\n1) រឿងវែង → ចុច “រឿងវែងក្នុង Telegram”\n2) ជ្រើសរឿង → មើល Trailer ឬ Full Movie ក្នុង Bot\n3) រឿងខ្លី → ចុច “រឿងខ្លីនៅ Website”\n4) Admin Upload Cover/Trailer/Full Movie ដោយផ្ទាល់ មិនចាំបាច់មាន Link។`,
       { parse_mode: 'HTML', ...mainMenu() }
     );
   });
@@ -118,13 +191,26 @@ function startTelegram() {
     await showCatalog(ctx);
   });
 
+  bot.action(/^story:(\d+)$/, async (ctx) => {
+    await ctx.answerCbQuery();
+    await showStoryDetails(ctx, Number(ctx.match[1]));
+  });
+
+  bot.action(/^trailer:(\d+)$/, async (ctx) => {
+    await sendTrailer(ctx, Number(ctx.match[1]));
+  });
+
+  bot.action(/^full:(\d+)$/, async (ctx) => {
+    await sendFullMovie(ctx, Number(ctx.match[1]));
+  });
+
   bot.action('help', async (ctx) => {
     await ctx.answerCbQuery();
     await ctx.reply('💬 រឿងវែងនៅ Telegram • រឿងខ្លីនៅ Website។', mainMenu());
   });
 
   bot.action('not_ready', async (ctx) => {
-    await ctx.answerCbQuery('រឿងនេះមិនទាន់មាន Telegram Link ទេ។', { show_alert: true });
+    await ctx.answerCbQuery('រឿងនេះមិនទាន់មាន Media ទេ។', { show_alert: true });
   });
 
   bot.catch((err) => console.error('[telegram]', err));
