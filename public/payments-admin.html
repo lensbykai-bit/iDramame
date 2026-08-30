@@ -3,31 +3,39 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#09060d" />
+  <meta name="theme-color" content="#120b18" />
   <title>iDrama.ai — Payment Admin</title>
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/brand.css" />
   <link rel="stylesheet" href="/admin-dashboard.css" />
   <link rel="stylesheet" href="/kantumruy.css" />
   <style>
-    body{background:radial-gradient(circle at 25% 0%,rgba(87,34,113,.22),transparent 34%),#08060c;color:#fff;min-height:100vh}
-    .pay-admin{max-width:1180px;margin:0 auto;padding:36px 22px 80px}
-    .pay-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:26px}
-    .pay-title h1{font-size:clamp(30px,4vw,46px);margin:8px 0 0}.pay-title .eyebrow{color:#20e0e8;letter-spacing:.12em;font-weight:800}
-    .back-admin{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:#fff;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);padding:11px 16px;border-radius:14px}
-    .pay-login,.pay-card,.orders-panel,.khqr-maker{background:rgba(17,12,23,.92);border:1px solid rgba(255,255,255,.10);box-shadow:0 18px 50px rgba(0,0,0,.25)}
-    .pay-login{max-width:520px;margin:55px auto;border-radius:22px;padding:26px}.pay-login h2{margin:0 0 8px;font-size:26px}.pay-login input{box-sizing:border-box;width:100%;margin:14px 0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.13);background:#0d0912;color:#fff;padding:14px 15px;font-size:16px;outline:none}.pay-login input:focus{border-color:#20e0e8;box-shadow:0 0 0 3px rgba(32,224,232,.12)}
-    .khqr-maker{border-radius:24px;padding:22px;margin-bottom:20px}.khqr-maker h2{margin:0 0 7px;font-size:28px}.khqr-maker p{margin:0;opacity:.72}.maker-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;margin-top:17px}.maker-row input{width:100%;box-sizing:border-box;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:#0d0912;color:#fff;padding:14px 15px;font-size:17px;outline:none}.maker-row input:focus{border-color:#20e0e8;box-shadow:0 0 0 3px rgba(32,224,232,.12)}.generate-btn{border:0;border-radius:14px;padding:13px 20px;background:linear-gradient(135deg,#20e0e8,#8b5cf6);color:#071013;font-weight:900;cursor:pointer;min-width:180px}.generate-btn:disabled{opacity:.55;cursor:not-allowed}.qr-result{display:none;margin-top:18px;padding:18px;border-radius:18px;background:#fff;color:#111;text-align:center}.qr-result.open{display:block}.qr-result img{display:block;width:min(360px,100%);margin:12px auto;border-radius:12px}.qr-meta{display:grid;gap:6px;font-size:14px}.real-badge{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;background:#dcfce7;color:#14532d;font-weight:900;font-size:13px}.maker-status{margin-top:12px;line-height:1.7}
-    .orders-panel{border-radius:24px;padding:22px}.orders-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}.orders-toolbar h2{margin:0 0 6px;font-size:29px}.orders-toolbar p{margin:0;opacity:.72}
-    .pay-grid{display:grid;gap:14px}.pay-card{border-radius:18px;padding:18px 20px;display:grid;grid-template-columns:minmax(0,1.5fr) .7fr .8fr;gap:16px;align-items:center}.pay-card strong{font-size:18px}.pay-actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}.pay-status{font-weight:800;margin-top:5px}.pay-status.awaiting_review{color:#ffd66b}.pay-status.paid{color:#7df6a4}.pay-status.rejected{color:#ff8d8d}.pay-status.pending{color:#b8b8c7}.admin-btn{border:0;border-radius:12px;padding:11px 15px;font-weight:800;cursor:pointer}.admin-btn:disabled{opacity:.55;cursor:not-allowed}.approve{background:#27d467;color:#06150a}.reject{background:#ef4444;color:#fff}.refresh{background:#fff;color:#111;min-width:110px}.muted-small{opacity:.62;font-size:12px;line-height:1.7}.empty-note{grid-column:1/-1;text-align:center;padding:30px 16px;color:#d5ccdc}.manual-note{display:flex;gap:10px;align-items:flex-start;margin-top:18px;padding:14px 16px;border-radius:14px;background:rgba(255,214,107,.08);border:1px solid rgba(255,214,107,.18);color:#f2e7bf}.status{line-height:1.7}
-    @media(max-width:760px){.pay-admin{padding:22px 14px 60px}.pay-card{grid-template-columns:1fr}.pay-actions{justify-content:flex-start}.orders-panel,.khqr-maker{padding:16px}.pay-head{align-items:flex-start}.refresh{width:100%}.maker-row{grid-template-columns:1fr}.generate-btn{width:100%}}
+    :root{--pink:#ff4f9a;--pink2:#ff7bb7;--panel:#15101b;--line:rgba(255,255,255,.10);--muted:#aa9fb3}
+    *{box-sizing:border-box}
+    body{margin:0;background:radial-gradient(circle at 24% 0%,rgba(255,79,154,.12),transparent 28%),radial-gradient(circle at 86% 8%,rgba(139,92,246,.10),transparent 25%),#09060d;color:#fff;min-height:100vh}
+    .pay-admin{max-width:1240px;margin:0 auto;padding:30px 22px 80px}
+    .pay-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:24px}
+    .brandline{display:flex;align-items:center;gap:11px;font-size:20px;font-weight:900}.brandmark{width:38px;height:38px;border-radius:12px;background:linear-gradient(135deg,var(--pink),var(--pink2));display:grid;place-items:center;box-shadow:0 10px 28px rgba(255,79,154,.28)}.brandmark:before{content:'▶';font-size:16px;color:#fff;transform:translateX(1px)}.brandline strong{font-size:22px}.brandline strong span{color:var(--pink)}.brandline .dot{color:var(--pink)}.brandline .khqr-brand{color:#ff6cab;font-size:15px;letter-spacing:.04em}
+    .pay-title h1{font-size:clamp(28px,3.6vw,42px);margin:10px 0 0}.pay-title .eyebrow{color:#20e0e8;letter-spacing:.1em;font-weight:800;font-size:13px}
+    .back-admin{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:#ff83bc;border:1px solid rgba(255,79,154,.25);background:rgba(255,79,154,.06);padding:11px 16px;border-radius:999px;font-weight:800}.back-admin:hover{background:rgba(255,79,154,.12)}
+    .pay-login,.pay-card,.orders-panel,.khqr-maker{background:rgba(18,13,24,.92);border:1px solid var(--line);box-shadow:0 18px 50px rgba(0,0,0,.25)}
+    .pay-login{max-width:520px;margin:55px auto;border-radius:22px;padding:26px}.pay-login h2{margin:0 0 8px;font-size:26px}.pay-login input{width:100%;margin:14px 0;border-radius:14px;border:1px solid rgba(255,255,255,.13);background:#0d0912;color:#fff;padding:14px 15px;font-size:16px;outline:none}.pay-login input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,79,154,.12)}
+    .khqr-maker{border-radius:26px;padding:20px;margin-bottom:22px}.maker-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}.khqr-maker h2{margin:4px 0 6px;font-size:28px}.khqr-maker p{margin:0;opacity:.72}.maker-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;margin-top:17px}.maker-row input{width:100%;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:#0d0912;color:#fff;padding:14px 15px;font-size:17px;outline:none}.maker-row input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,79,154,.12)}.generate-btn{border:0;border-radius:14px;padding:13px 22px;background:linear-gradient(135deg,#ff3f91,#ff72b3);color:#fff;font-weight:900;cursor:pointer;min-width:190px;box-shadow:0 12px 26px rgba(255,79,154,.20)}.generate-btn:disabled{opacity:.55;cursor:not-allowed}.maker-status{margin-top:12px;line-height:1.7}
+    .qr-result{display:none;margin-top:18px;border-radius:25px;background:#fbfbfd;color:#17121a;overflow:hidden;border:1px solid #ece9ef}.qr-result.open{display:block}.qr-shell{padding:28px 24px 14px;text-align:center}.real-badge{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border-radius:999px;background:#ffe4ef;color:#e8337e;font-weight:900;font-size:13px}.pay-caption{margin-top:9px;font-size:14px;color:#665c69;font-weight:700}.amount-big{font-size:clamp(34px,5vw,48px);font-weight:900;color:#f13f89;line-height:1.2;margin:2px 0 13px}.qr-frame{width:min(370px,92vw);margin:0 auto;border:2px solid #ff5aa1;border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 16px 36px rgba(241,63,137,.12)}.qr-frame img{display:block;width:100%;padding:12px;background:#fff}.qr-brand-foot{display:flex;align-items:center;justify-content:center;gap:9px;padding:11px 14px;background:linear-gradient(180deg,#fff,#fff4f8);border-top:1px solid #ffd9e8;font-size:25px;font-weight:900}.mini-play{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,#ff3f91,#ff7bb7);display:grid;place-items:center;color:#fff;font-size:12px}.qr-brand-foot .ai{color:#f0448d}
+    .qr-info-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;padding:18px 20px 16px;border-top:1px dashed #f2bfd4;margin-top:18px}.info-card{min-height:78px;border:1px solid #ebe7ed;border-radius:15px;background:#fff;padding:12px 13px;display:flex;align-items:center;gap:10px;text-align:left}.info-icon{width:38px;height:38px;flex:0 0 38px;border-radius:50%;display:grid;place-items:center;background:#ffe9f2;color:#ef3f88;font-size:18px}.info-card span{display:block;font-size:11px;color:#807482;margin-bottom:3px}.info-card strong{display:block;font-size:14px;word-break:break-word}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;background:linear-gradient(135deg,#f83284,#fb64aa);color:#fff;margin:0 12px 12px;border-radius:16px;overflow:hidden}.step{display:flex;align-items:center;gap:12px;padding:15px 18px;min-height:78px}.step+.step{border-left:1px solid rgba(255,255,255,.18)}.step-num{width:31px;height:31px;flex:0 0 31px;border-radius:50%;display:grid;place-items:center;background:#fff;color:#e7377f;font-weight:900}.step strong{font-size:14px}.step small{display:block;opacity:.9;margin-top:2px}.safe-note{color:#756b78;text-align:center;font-size:12px;padding:3px 16px 20px}
+    .orders-panel{border-radius:24px;padding:22px}.orders-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}.orders-toolbar h2{margin:0 0 6px;font-size:29px}.orders-toolbar p{margin:0;opacity:.72}.pay-grid{display:grid;gap:14px}.pay-card{border-radius:18px;padding:18px 20px;display:grid;grid-template-columns:minmax(0,1.5fr) .7fr .8fr;gap:16px;align-items:center}.pay-card strong{font-size:18px}.pay-actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}.pay-status{font-weight:800;margin-top:5px}.pay-status.awaiting_review{color:#ffd66b}.pay-status.paid{color:#7df6a4}.pay-status.rejected{color:#ff8d8d}.pay-status.pending{color:#b8b8c7}.admin-btn{border:0;border-radius:12px;padding:11px 15px;font-weight:800;cursor:pointer}.admin-btn:disabled{opacity:.55;cursor:not-allowed}.approve{background:#27d467;color:#06150a}.reject{background:#ef4444;color:#fff}.refresh{background:#fff;color:#111;min-width:110px}.muted-small{opacity:.62;font-size:12px;line-height:1.7}.empty-note{grid-column:1/-1;text-align:center;padding:30px 16px;color:#d5ccdc}.manual-note{display:flex;gap:10px;align-items:flex-start;margin-top:18px;padding:14px 16px;border-radius:14px;background:rgba(255,214,107,.08);border:1px solid rgba(255,214,107,.18);color:#f2e7bf}.status{line-height:1.7}
+    @media(max-width:850px){.qr-info-grid{grid-template-columns:repeat(2,1fr)}.steps{grid-template-columns:1fr}.step+.step{border-left:0;border-top:1px solid rgba(255,255,255,.18)}}
+    @media(max-width:760px){.pay-admin{padding:20px 12px 60px}.pay-card{grid-template-columns:1fr}.pay-actions{justify-content:flex-start}.orders-panel,.khqr-maker{padding:15px}.pay-head{align-items:flex-start}.refresh{width:100%}.maker-row{grid-template-columns:1fr}.generate-btn{width:100%}.brandline{font-size:16px}.brandline strong{font-size:19px}.qr-shell{padding:22px 10px 12px}.qr-info-grid{padding:16px 10px;grid-template-columns:1fr}.steps{margin:0 8px 8px}}
   </style>
 </head>
 <body>
   <main class="pay-admin">
     <div class="pay-head">
-      <div class="pay-title"><div class="eyebrow">iDrama.ai • BAKONG KHQR</div><h1>ផ្ទាំងអនុម័តការទូទាត់</h1></div>
-      <a class="back-admin" href="/admin.html">← ត្រឡប់ទៅ Admin</a>
+      <div>
+        <div class="brandline"><span class="brandmark"></span><strong>iDrama<span>.ai</span></strong><span class="dot">•</span><span class="khqr-brand">BAKONG KHQR</span></div>
+        <div class="pay-title"><h1>ផ្ទាំងអនុម័តការទូទាត់</h1></div>
+      </div>
+      <a class="back-admin" href="/admin.html">← Admin Dashboard</a>
     </div>
 
     <section id="loginBox" class="pay-login">
@@ -40,23 +48,39 @@
 
     <section id="ordersBox" hidden>
       <section class="khqr-maker">
-        <div class="eyebrow">REAL BAKONG KHQR</div>
-        <h2>បង្កើត KHQR ពិត</h2>
-        <p>បញ្ចូលចំនួនទឹកប្រាក់ជា KHR។ QR នេះភ្ជាប់ទៅ BAKONG_ACCOUNT_ID ពិតដែលបានកំណត់នៅ Server។</p>
+        <div class="maker-top">
+          <div><div class="eyebrow">REAL BAKONG KHQR</div><h2>បង្កើត KHQR ពិត</h2><p>បញ្ចូលចំនួនទឹកប្រាក់ជា KHR ហើយបង្កើត QR សម្រាប់ទទួលប្រាក់តាម Bakong/Bank App។</p></div>
+        </div>
         <div class="maker-row">
-          <input id="realKhqrAmount" type="number" min="100" max="100000000" step="100" inputmode="numeric" placeholder="ឧ. 5000" />
+          <input id="realKhqrAmount" type="number" min="100" max="100000000" step="100" inputmode="numeric" placeholder="ឧ. 1000" />
           <button id="generateKhqrBtn" class="generate-btn">បង្កើត KHQR ពិត</button>
         </div>
         <div id="khqrMakerStatus" class="maker-status"></div>
+
         <div id="realKhqrResult" class="qr-result">
-          <span class="real-badge">✓ REAL KHQR • KHR</span>
-          <div id="realKhqrAmountText" style="font-size:28px;font-weight:900;margin-top:10px"></div>
-          <img id="realKhqrImage" alt="Real Bakong KHQR" />
-          <div class="qr-meta">
-            <strong id="realKhqrMerchant"></strong>
-            <span id="realKhqrBill"></span>
-            <span>KHQR នេះមានសុពលភាពប្រហែល 10 នាទី</span>
+          <div class="qr-shell">
+            <span class="real-badge">✓ REAL KHQR • KHR</span>
+            <div class="pay-caption">ចំនួនទឹកប្រាក់</div>
+            <div id="realKhqrAmountText" class="amount-big"></div>
+            <div class="qr-frame">
+              <img id="realKhqrImage" alt="Real Bakong KHQR" />
+              <div class="qr-brand-foot"><span class="mini-play">▶</span><span>iDrama<span class="ai">.ai</span></span></div>
+            </div>
+
+            <div class="qr-info-grid">
+              <div class="info-card"><div class="info-icon">👤</div><div><span>អ្នកទទួល</span><strong id="realKhqrMerchant">iDrama.ai</strong></div></div>
+              <div class="info-card"><div class="info-icon">▣</div><div><span>Bill ID</span><strong id="realKhqrBill">-</strong></div></div>
+              <div class="info-card"><div class="info-icon">🏦</div><div><span>បណ្តាញទូទាត់</span><strong>BAKONG KHQR</strong></div></div>
+              <div class="info-card"><div class="info-icon">◷</div><div><span>សុពលភាព</span><strong>10 នាទី</strong></div></div>
+            </div>
           </div>
+
+          <div class="steps">
+            <div class="step"><span class="step-num">1</span><div><strong>ស្កេន QR Code</strong><small>ប្រើ Bakong/Bank App</small></div></div>
+            <div class="step"><span class="step-num">2</span><div><strong>បញ្ជាក់ការទូទាត់</strong><small>ពិនិត្យចំនួនប្រាក់ក្នុង App</small></div></div>
+            <div class="step"><span class="step-num">3</span><div><strong>រក្សាទុកបង្កាន់ដៃ</strong><small>ប្រើសម្រាប់ Admin ពិនិត្យ</small></div></div>
+          </div>
+          <div class="safe-note">🛡️ សូមពិនិត្យឈ្មោះអ្នកទទួល និងចំនួនទឹកប្រាក់ក្នុង Bank App មុនពេលបញ្ជាក់ការទូទាត់។</div>
         </div>
       </section>
 
