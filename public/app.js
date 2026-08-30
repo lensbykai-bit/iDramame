@@ -50,7 +50,7 @@ function showStory(id){
     <p class="modal-preview">${esc(s.preview)}</p>
     <div class="amount-row"><span class="muted">តម្លៃរឿងពេញ</span><strong class="price">${money(s.price_khr)}</strong></div>
     <button class="buy-btn" id="buyBtn" style="width:100%;margin-top:18px">💳 ទិញតាម Bakong KHQR</button>
-    <p class="small">បង់នៅលើ iDrama.me Web Store។ ពេល Payment ត្រូវបានបញ្ជាក់ Website នឹងបើក Watch Page។</p>`;
+    <p class="small">បង់នៅលើ «ខ្ញុំចង់មើលរឿងអេអាយ»។ ពេល Payment ត្រូវបានបញ្ជាក់ Website នឹងបើក Watch Page។</p>`;
   openModal();
   $('#buyBtn').addEventListener('click', () => createOrder(s.id));
 }
