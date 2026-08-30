@@ -1,5 +1,5 @@
 (() => {
-  const PHONE_ID = 'authPhone';
+  const SESSION_KEY = 'idramaai_supabase_session_v1';
 
   function normalizeCambodiaPhone(value) {
     let digits = String(value || '').replace(/\D/g, '');
@@ -9,96 +9,139 @@
     return `+855${digits}`;
   }
 
-  function validCambodiaPhone(value) {
+  function isEmail(value) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
+  }
+
+  function isPhone(value) {
     return /^\+855\d{8,10}$/.test(normalizeCambodiaPhone(value));
   }
 
-  function injectPhoneField() {
+  function authConfig() {
+    const cfg = window.IDRAMA_SUPABASE || {};
+    return { url: cfg.url || '', key: cfg.publishableKey || '' };
+  }
+
+  async function authFetch(path, body) {
+    const { url, key } = authConfig();
+    if (!url || !key) throw new Error('Account service is not configured.');
+
+    const res = await fetch(`${url}/auth/v1/${path}`, {
+      method: 'POST',
+      headers: {
+        apikey: key,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(body)
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.msg || data.message || data.error_description || 'Account request failed.');
+    }
+    return data;
+  }
+
+  function saveSession(data) {
+    if (data?.access_token) localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+  }
+
+  function enhanceAuthForm() {
     const form = document.querySelector('#authForm');
-    if (!form || document.getElementById(PHONE_ID)) return;
+    const input = document.querySelector('#authEmail');
+    if (!form || !input) return;
+
+    const label = input.closest('label');
+    if (label) {
+      for (const node of label.childNodes) {
+        if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+          node.textContent = 'Email / លេខទូរស័ព្ទ';
+          break;
+        }
+      }
+    }
+
+    input.type = 'text';
+    input.inputMode = 'email';
+    input.autocomplete = 'username';
+    input.placeholder = 'Email ឬ 012 345 678';
+    input.setAttribute('aria-label', 'Email ឬ លេខទូរស័ព្ទ');
+
+    document.querySelector('.phone-field-label')?.remove();
 
     const heading = document.querySelector('#modalBody .modal-title');
-    const isSignup = heading && heading.textContent.includes('បង្កើតគណនី');
-    if (!isSignup) return;
+    const isSignup = heading?.textContent.includes('បង្កើតគណនី');
+    const submit = document.querySelector('#authSubmit');
+    if (submit && isSignup) submit.textContent = 'បង្កើតគណនី';
 
+    if (!form.dataset.identifierAuthInstalled) {
+      form.dataset.identifierAuthInstalled = '1';
+      form.addEventListener('submit', handleSubmit, true);
+    }
+  }
+
+  async function handleSubmit(event) {
+    const heading = document.querySelector('#modalBody .modal-title');
+    const isSignup = heading?.textContent.includes('បង្កើតគណនី');
+    const identifierInput = document.querySelector('#authEmail');
     const passwordInput = document.querySelector('#authPassword');
-    const passwordLabel = passwordInput?.closest('label');
-    if (!passwordLabel) return;
+    const submit = document.querySelector('#authSubmit');
+    const status = document.querySelector('#authStatus');
+    if (!identifierInput || !passwordInput || !submit || !status) return;
 
-    const label = document.createElement('label');
-    label.className = 'phone-field-label';
-    label.innerHTML = `លេខទូរស័ព្ទ
-      <div class="phone-input-wrap">
-        <span class="phone-prefix">🇰🇭 +855</span>
-        <input id="${PHONE_ID}" type="tel" inputmode="tel" autocomplete="tel" required placeholder="12 345 678" aria-label="លេខទូរស័ព្ទ" />
-      </div>
-      <small class="phone-help">ឧទាហរណ៍៖ 012 345 678</small>`;
+    event.preventDefault();
+    event.stopImmediatePropagation();
 
-    passwordLabel.parentNode.insertBefore(label, passwordLabel);
-  }
+    const identifier = identifierInput.value.trim();
+    const password = passwordInput.value;
+    let body;
 
-  function showSavedPhone() {
-    const accountCard = document.querySelector('#modalBody .account-card');
-    if (!accountCard || accountCard.querySelector('.account-phone')) return;
-    const phone = window.currentUser?.user_metadata?.phone_number || window.currentUser?.user_metadata?.phone || '';
-    if (!phone) return;
-    const target = accountCard.querySelector('div:last-child');
-    if (!target) return;
-    const line = document.createElement('div');
-    line.className = 'account-phone';
-    line.textContent = `📱 ${phone}`;
-    target.appendChild(line);
-  }
+    if (isEmail(identifier)) {
+      body = { email: identifier, password };
+    } else if (isPhone(identifier)) {
+      body = { phone: normalizeCambodiaPhone(identifier), password };
+    } else {
+      status.className = 'status error auth-status';
+      status.textContent = 'សូមបញ្ចូល Email ឬលេខទូរស័ព្ទកម្ពុជាឱ្យបានត្រឹមត្រូវ។';
+      return;
+    }
 
-  function installSignupOverride() {
-    if (typeof window.signUp !== 'function' || typeof window.authRequest !== 'function') return;
+    submit.disabled = true;
+    submit.innerHTML = '<span class="spinner"></span>កំពុងដំណើរការ…';
+    status.className = 'status auth-status';
+    status.textContent = '⏳ កំពុងភ្ជាប់ Account…';
 
-    window.signUp = async function signUpWithPhone(email, password) {
-      const phoneInput = document.getElementById(PHONE_ID);
-      const rawPhone = phoneInput?.value || '';
-      const phone = normalizeCambodiaPhone(rawPhone);
-
-      if (!validCambodiaPhone(rawPhone)) {
-        throw new Error('សូមបញ្ចូលលេខទូរស័ព្ទកម្ពុជាឱ្យបានត្រឹមត្រូវ។ ឧ. 012 345 678');
-      }
-
-      const data = await window.authRequest('signup', {
-        method: 'POST',
-        body: {
-          email,
-          password,
-          data: {
-            phone_number: phone,
-            phone,
-            country: 'KH'
-          }
-        }
-      });
+    try {
+      const path = isSignup ? 'signup' : 'token?grant_type=password';
+      const data = await authFetch(path, body);
 
       if (data.access_token) {
-        window.saveSession(data);
-        await window.loadUser();
-        return { signedIn: true };
+        saveSession(data);
+        location.reload();
+        return;
       }
-      return { signedIn: false };
-    };
+
+      status.className = 'status success auth-status';
+      status.textContent = isSignup
+        ? (body.phone
+          ? '✅ គណនីត្រូវបានបង្កើត។ ប្រសិនបើតម្រូវឱ្យបញ្ជាក់លេខ សូមពិនិត្យ SMS។'
+          : '✅ គណនីត្រូវបានបង្កើត។ សូមពិនិត្យ Email ដើម្បីបញ្ជាក់គណនី។')
+        : '✅ ដំណើរការជោគជ័យ។';
+    } catch (err) {
+      status.className = 'status error auth-status';
+      status.textContent = err.message;
+    } finally {
+      submit.disabled = false;
+      submit.textContent = isSignup ? 'បង្កើតគណនី' : 'ចូលគណនី';
+    }
   }
 
-  function enhanceModal() {
-    injectPhoneField();
-    showSavedPhone();
-  }
-
-  const observer = new MutationObserver(enhanceModal);
+  const observer = new MutationObserver(enhanceAuthForm);
   observer.observe(document.documentElement, { childList: true, subtree: true });
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      installSignupOverride();
-      enhanceModal();
-    });
+    document.addEventListener('DOMContentLoaded', enhanceAuthForm);
   } else {
-    installSignupOverride();
-    enhanceModal();
+    enhanceAuthForm();
   }
 })();
