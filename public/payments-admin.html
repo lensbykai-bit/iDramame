@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="km">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#09060d" />
+  <title>iDrama.ai — Payment Admin</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/brand.css" />
+  <link rel="stylesheet" href="/admin-dashboard.css" />
+  <link rel="stylesheet" href="/kantumruy.css" />
+  <style>
+    .pay-admin{max-width:1100px;margin:0 auto;padding:28px 18px 70px}.pay-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}.pay-login,.pay-card{background:rgba(18,13,24,.92);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:18px}.pay-login{max-width:520px;margin:50px auto}.pay-login input{width:100%;margin:10px 0 12px}.pay-grid{display:grid;gap:12px}.pay-card{display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:14px;align-items:center}.pay-actions{display:flex;gap:8px;flex-wrap:wrap}.pay-status{font-weight:700}.pay-status.awaiting_review{color:#ffd66b}.pay-status.paid{color:#7df6a4}.pay-status.rejected{color:#ff8484}.pay-status.pending{color:#b8b8c7}.admin-btn{border:0;border-radius:12px;padding:10px 13px;font-weight:700;cursor:pointer}.approve{background:#22c55e;color:#06150a}.reject{background:#ef4444;color:#fff}.refresh{background:#fff;color:#111}.muted-small{opacity:.68;font-size:12px}@media(max-width:760px){.pay-card{grid-template-columns:1fr}.pay-actions{justify-content:flex-start}}
+  </style>
+</head>
+<body>
+  <main class="pay-admin">
+    <div class="pay-head">
+      <div><div class="eyebrow">iDrama.ai • BAKONG KHQR</div><h1>Payment Approval</h1></div>
+      <a class="secondary-btn" href="/admin.html">← Admin</a>
+    </div>
+
+    <section id="loginBox" class="pay-login">
+      <h2>Admin Login</h2>
+      <p class="muted">ប្រើ ADMIN_PASSWORD ដូចផ្ទាំង Admin របស់ Web។</p>
+      <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Admin password" />
+      <button id="loginBtn" class="primary-btn" style="width:100%">ចូល Payment Admin</button>
+      <div id="loginStatus" class="status" style="margin-top:12px"></div>
+    </section>
+
+    <section id="ordersBox" hidden>
+      <div class="pay-head">
+        <div><h2>KHQR Orders</h2><p class="muted">Approve តែបន្ទាប់ពីអ្នកបានពិនិត្យប្រាក់ចូល Bakong រួច។</p></div>
+        <button id="refreshBtn" class="admin-btn refresh">↻ Refresh</button>
+      </div>
+      <div id="orders" class="pay-grid"></div>
+    </section>
+  </main>
+
+  <script src="/supabase-config.js"></script>
+  <script src="/payments-admin.js"></script>
+</body>
+</html>
