@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="km">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Watch • iDrama.me</title><link rel="stylesheet" href="/styles.css"><style>
+.watch-shell{max-width:1060px;margin:0 auto;padding:28px 18px 60px}.watch-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}.watch-brand{font-weight:900;font-style:italic;font-size:22px}.watch-brand span{color:#ff2f8a}.player-wrap{position:relative;border:1px solid rgba(255,255,255,.1);border-radius:22px;overflow:hidden;background:#000;box-shadow:0 30px 100px rgba(0,0,0,.5)}video{display:block;width:100%;max-height:76vh;background:#000}.wm{position:absolute;top:18px;right:18px;pointer-events:none;background:rgba(0,0,0,.42);border:1px solid rgba(255,255,255,.15);backdrop-filter:blur(6px);padding:7px 10px;border-radius:999px;font:11px ui-monospace,monospace;color:rgba(255,255,255,.72)}.watch-meta{padding:18px 2px}.watch-meta h1{font-size:28px;margin:0 0 6px}.notice{color:#a99db3;line-height:1.7;font-size:13px}.watch-error{margin:80px auto;max-width:600px;text-align:center;padding:28px;border:1px solid rgba(255,255,255,.1);border-radius:22px;background:#120c18}
+</style></head>
+<body>
+<div class="watch-shell">
+  <div class="watch-top"><div class="watch-brand">iDrama<span>.me</span></div><a class="ghost-btn" href="/">← ត្រឡប់ទៅ Store</a></div>
+  <div id="content"><div class="loading">កំពុងបើករឿង…</div></div>
+</div>
+<script>
+const token=new URLSearchParams(location.search).get('token');
+const box=document.getElementById('content');
+function esc(v=''){return String(v).replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+(async()=>{try{if(!token)throw new Error('Watch link មិនត្រឹមត្រូវ។');const r=await fetch('/api/access?token='+encodeURIComponent(token),{cache:'no-store'});const d=await r.json();if(!r.ok)throw new Error(d.error||'Access denied');box.innerHTML=`<div class="player-wrap"><video id="video" controls controlsList="nodownload noplaybackrate" disablePictureInPicture playsinline preload="metadata" src="${d.videoUrl}"></video><div class="wm">iDrama.me • ${esc(d.orderId)}</div></div><div class="watch-meta"><h1>${esc(d.story.title)}</h1><div class="notice">🔐 Access របស់អ្នកត្រូវបានចុះហត្ថលេខាដោយ Server។ ការថតអេក្រង់ដោយឧបករណ៍ផ្សេងមិនអាចរារាំងបាន 100% ទេ ដូច្នេះ Order Watermark ត្រូវបានបង្ហាញលើ Player។</div></div>`;document.addEventListener('contextmenu',e=>e.preventDefault());}catch(e){box.innerHTML=`<div class="watch-error"><h2>មិនអាចបើករឿងបាន</h2><p class="muted">${esc(e.message)}</p><a class="primary-btn" href="/">ត្រឡប់ទៅ Store</a></div>`;}})();
+</script>
+</body></html>
