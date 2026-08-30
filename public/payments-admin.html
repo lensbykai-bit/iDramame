@@ -10,30 +10,40 @@
   <link rel="stylesheet" href="/admin-dashboard.css" />
   <link rel="stylesheet" href="/kantumruy.css" />
   <style>
-    .pay-admin{max-width:1100px;margin:0 auto;padding:28px 18px 70px}.pay-head{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px}.pay-login,.pay-card{background:rgba(18,13,24,.92);border:1px solid rgba(255,255,255,.1);border-radius:18px;padding:18px}.pay-login{max-width:520px;margin:50px auto}.pay-login input{width:100%;margin:10px 0 12px}.pay-grid{display:grid;gap:12px}.pay-card{display:grid;grid-template-columns:1.4fr .8fr .8fr;gap:14px;align-items:center}.pay-actions{display:flex;gap:8px;flex-wrap:wrap}.pay-status{font-weight:700}.pay-status.awaiting_review{color:#ffd66b}.pay-status.paid{color:#7df6a4}.pay-status.rejected{color:#ff8484}.pay-status.pending{color:#b8b8c7}.admin-btn{border:0;border-radius:12px;padding:10px 13px;font-weight:700;cursor:pointer}.approve{background:#22c55e;color:#06150a}.reject{background:#ef4444;color:#fff}.refresh{background:#fff;color:#111}.muted-small{opacity:.68;font-size:12px}@media(max-width:760px){.pay-card{grid-template-columns:1fr}.pay-actions{justify-content:flex-start}}
+    body{background:radial-gradient(circle at 25% 0%,rgba(87,34,113,.22),transparent 34%),#08060c;color:#fff;min-height:100vh}
+    .pay-admin{max-width:1180px;margin:0 auto;padding:36px 22px 80px}
+    .pay-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:26px}
+    .pay-title h1{font-size:clamp(30px,4vw,46px);margin:8px 0 0}.pay-title .eyebrow{color:#20e0e8;letter-spacing:.12em;font-weight:800}
+    .back-admin{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:#fff;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);padding:11px 16px;border-radius:14px}
+    .pay-login,.pay-card,.orders-panel{background:rgba(17,12,23,.92);border:1px solid rgba(255,255,255,.10);box-shadow:0 18px 50px rgba(0,0,0,.25)}
+    .pay-login{max-width:520px;margin:55px auto;border-radius:22px;padding:26px}.pay-login h2{margin:0 0 8px;font-size:26px}.pay-login input{box-sizing:border-box;width:100%;margin:14px 0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.13);background:#0d0912;color:#fff;padding:14px 15px;font-size:16px;outline:none}.pay-login input:focus{border-color:#20e0e8;box-shadow:0 0 0 3px rgba(32,224,232,.12)}
+    .orders-panel{border-radius:24px;padding:22px}.orders-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}.orders-toolbar h2{margin:0 0 6px;font-size:29px}.orders-toolbar p{margin:0;opacity:.72}
+    .pay-grid{display:grid;gap:14px}.pay-card{border-radius:18px;padding:18px 20px;display:grid;grid-template-columns:minmax(0,1.5fr) .7fr .8fr;gap:16px;align-items:center}.pay-card strong{font-size:18px}.pay-actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}.pay-status{font-weight:800;margin-top:5px}.pay-status.awaiting_review{color:#ffd66b}.pay-status.paid{color:#7df6a4}.pay-status.rejected{color:#ff8d8d}.pay-status.pending{color:#b8b8c7}.admin-btn{border:0;border-radius:12px;padding:11px 15px;font-weight:800;cursor:pointer}.admin-btn:disabled{opacity:.55;cursor:not-allowed}.approve{background:#27d467;color:#06150a}.reject{background:#ef4444;color:#fff}.refresh{background:#fff;color:#111;min-width:110px}.muted-small{opacity:.62;font-size:12px;line-height:1.7}.empty-note{grid-column:1/-1;text-align:center;padding:30px 16px;color:#d5ccdc}.manual-note{display:flex;gap:10px;align-items:flex-start;margin-top:18px;padding:14px 16px;border-radius:14px;background:rgba(255,214,107,.08);border:1px solid rgba(255,214,107,.18);color:#f2e7bf}.status{line-height:1.7}
+    @media(max-width:760px){.pay-admin{padding:22px 14px 60px}.pay-card{grid-template-columns:1fr}.pay-actions{justify-content:flex-start}.orders-panel{padding:16px}.pay-head{align-items:flex-start}.refresh{width:100%}}
   </style>
 </head>
 <body>
   <main class="pay-admin">
     <div class="pay-head">
-      <div><div class="eyebrow">iDrama.ai • BAKONG KHQR</div><h1>Payment Approval</h1></div>
-      <a class="secondary-btn" href="/admin.html">← Admin</a>
+      <div class="pay-title"><div class="eyebrow">iDrama.ai • BAKONG KHQR</div><h1>ផ្ទាំងអនុម័តការទូទាត់</h1></div>
+      <a class="back-admin" href="/admin.html">← ត្រឡប់ទៅ Admin</a>
     </div>
 
     <section id="loginBox" class="pay-login">
-      <h2>Admin Login</h2>
-      <p class="muted">ប្រើ ADMIN_PASSWORD ដូចផ្ទាំង Admin របស់ Web។</p>
-      <input id="adminPassword" type="password" autocomplete="current-password" placeholder="Admin password" />
-      <button id="loginBtn" class="primary-btn" style="width:100%">ចូល Payment Admin</button>
+      <h2>ចូលផ្ទាំង Payment Admin</h2>
+      <p class="muted">ប្រើ ADMIN_PASSWORD ដូចគ្នានឹងផ្ទាំង Admin របស់ Web។</p>
+      <input id="adminPassword" type="password" autocomplete="current-password" placeholder="បញ្ចូល Admin password" />
+      <button id="loginBtn" class="primary-btn" style="width:100%">ចូលផ្ទាំងអនុម័ត</button>
       <div id="loginStatus" class="status" style="margin-top:12px"></div>
     </section>
 
-    <section id="ordersBox" hidden>
-      <div class="pay-head">
-        <div><h2>KHQR Orders</h2><p class="muted">Approve តែបន្ទាប់ពីអ្នកបានពិនិត្យប្រាក់ចូល Bakong រួច។</p></div>
-        <button id="refreshBtn" class="admin-btn refresh">↻ Refresh</button>
+    <section id="ordersBox" class="orders-panel" hidden>
+      <div class="orders-toolbar">
+        <div><h2>ការបញ្ជាទិញ KHQR</h2><p>ចុច Approve តែបន្ទាប់ពីអ្នកបានពិនិត្យថាប្រាក់ចូល Bakong រួចរាល់។</p></div>
+        <button id="refreshBtn" class="admin-btn refresh">↻ ផ្ទុកឡើងវិញ</button>
       </div>
-      <div id="orders" class="pay-grid"></div>
+      <div class="manual-note"><span>🛡️</span><span>ប្រព័ន្ធនេះប្រើការអនុម័តដោយ Admin។ អតិថិជនមិនត្រូវបាន Unlock ដោយស្វ័យប្រវត្តិពីផ្ទាំងនេះទេ។</span></div>
+      <div id="orders" class="pay-grid" style="margin-top:16px"></div>
     </section>
   </main>
 
