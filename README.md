@@ -1,14 +1,16 @@
 # iDramaAi
 
-Platform សម្រាប់កម្ពុជា៖ **រឿងខ្លីមើលនៅ Website** និង **រឿងវែងមើលក្នុង Telegram**។ Web Admin អាច Upload Cover, Trailer និង Full Video របស់រឿងខ្លីពីកុំព្យូទ័រ/ទូរស័ព្ទដោយផ្ទាល់ ហើយ Server ផ្ញើ File ទៅ Telegram Bot ដើម្បីរក្សាទុកជា `file_id`។
+Platform សម្រាប់កម្ពុជា៖ **រឿងខ្លីមើលនៅ Website** និង **រឿងវែងមើលក្នុង Telegram**។
 
 ## Flow
 
 ### រឿងខ្លី
-Web Admin → ជ្រើស Cover/Trailer/Full Video → Upload ទៅ Telegram → រក្សា Telegram file_id ក្នុង `stories.json` → Website បង្ហាញ Cover/Trailer → Bakong KHQR → Signed Watch Page → Full Video។
+Web Admin → ជ្រើស Cover/Trailer/Full Video → Upload ទៅ Telegram → រក្សា Telegram `file_id` → Website បង្ហាញ Cover/Trailer → Bakong KHQR → Signed Watch Page → Full Video។
 
-### រឿងវែង
-Upload Video/Post នៅ Telegram → Copy Telegram Post Link → Web Admin ជ្រើស `Telegram` → Paste Link → Bot Catalog បង្ហាញរឿងវែង។
+### រឿងវែង / Full Movie ធំៗ
+Web Admin → ជ្រើស `Telegram` → ដាក់ Title/Preview/Price + Cover/Trailer → Save → ចូល `@iDramaAiBot` → `/adminmovies` → ជ្រើសរឿង → ផ្ញើ Full Movie ជា Video ឬ File មក Bot ដោយផ្ទាល់ → Bot រក្សា `file_id` និង Metadata ទៅ `stories.json`/GitHub → អ្នកមើលចុច Full Movie ក្នុង Bot។
+
+Full Movie ធំៗមិន Upload ឆ្លងកាត់ Render ទេ។ វាត្រូវផ្ញើពី Telegram app ទៅ Bot ដោយផ្ទាល់ ដើម្បីជៀស Web/Bot HTTP multipart upload limit។
 
 ## មុខងាររួចរាល់
 
@@ -17,14 +19,16 @@ Upload Video/Post នៅ Telegram → Copy Telegram Post Link → Web Admin ជ�
 - Web Admin ជ្រើស `Web` ឬ `Telegram`
 - Cover Image Upload → Telegram
 - Trailer Video Upload → Telegram
-- Full Video Upload → Telegram
-- មិនចាំបាច់រក Cover/Trailer/Full Video URL ដោយដៃ
+- Full Video រឿងខ្លី Upload → Telegram
+- Full Movie ធំៗ → ផ្ញើទៅ Bot ដោយផ្ទាល់
+- Bot `/adminmovies` សម្រាប់ភ្ជាប់ Full Movie ទៅរឿង
+- Bot `/cancelupload` សម្រាប់បោះបង់ការភ្ជាប់
+- Bot រក្សា `full_video_file_id`, file size, filename និង mime type
 - Bakong KHQR checkout សម្រាប់រឿងខ្លីក្នុង Web
 - Payment verification មុន Unlock
 - Signed Watch Link មានសុពលភាពកំណត់
 - Order Watermark លើ Watch Player
 - Full Video file_id មិនបង្ហាញក្នុង Public Catalog API
-- Telegram Bot `/start`, `/catalog`, `/myid`, `/help`
 
 ## Production
 
@@ -35,17 +39,28 @@ Upload Video/Post នៅ Telegram → Copy Telegram Post Link → Web Admin ជ�
 ## Telegram Storage Setup
 
 1. បើក `@iDramaAiBot` ហើយវាយ `/myid`។
-2. Bot នឹងផ្តល់ Telegram Chat ID ជាលេខ។
+2. Copy Telegram Chat ID។
 3. ទៅ Render → Environment → បន្ថែម៖
 
 ```env
 TELEGRAM_STORAGE_CHAT_ID=លេខដែល /myid ផ្តល់
 ```
 
-4. `BOT_TOKEN` ត្រូវជ Token របស់ Bot ថ្មី `@iDramaAiBot`។
-5. Save, rebuild, and deploy។
+4. `BOT_TOKEN` ត្រូវជា Token របស់ `@iDramaAiBot`។
+5. `GITHUB_TOKEN` ត្រូវមាន Contents: Read and write ដើម្បីឲ្យ Bot រក្សា Metadata Full Movie ទៅ GitHub។
+6. Save, rebuild, and deploy។
 
-ពេល Admin Upload File របស់រឿងខ្លី Bot នឹងផ្ញើ File ទៅ Chat នេះ ហើយ Server រក្សា `file_id` សម្រាប់ Website។
+## របៀប Upload Full Movie ធំៗ
+
+1. បង្កើតរឿងវែងក្នុង Web Admin ហើយ Save មុន។
+2. ចូល `@iDramaAiBot`។
+3. វាយ `/adminmovies`។
+4. ជ្រើសឈ្មោះរឿង។
+5. ផ្ញើ Full Movie ជា Video ឬ File មក Bot ដោយផ្ទាល់។
+6. Bot បង្ហាញ `ភ្ជាប់ Full Movie ជោគជ័យ` ហើយរក្សា Metadata ទៅ GitHub។
+7. `/catalog` → ជ្រើសរឿង → `មើល Full Movie`។
+
+ការផ្ញើ File ធំៗនៅតែអាស្រ័យលើដែនកំណត់ File របស់ Telegram account/app របស់អ្នក។
 
 ## Render Environment Variables
 
@@ -75,31 +90,13 @@ PORT=3000
 
 កុំ Commit Secret ទៅ GitHub។ Secret ទាំងអស់ដាក់នៅ Render Environment ប៉ុណ្ណោះ។
 
-## Admin
-
-### Web — រឿងខ្លី
-
-- ចំណងជើង
-- Preview / Description
-- តម្លៃ KHR
-- Upload Cover Image
-- Upload Trailer Video
-- Upload Full Video
-
-### Telegram — រឿងវែង
-
-- ចំណងជើង
-- Preview / Description
-- Telegram Video/Post Link
-
 ## Security
 
 - BOT_TOKEN, Bakong Token, Admin Password និង GitHub Token រក្សាទុកក្នុង Render Environment
+- Command `/adminmovies` អនុញ្ញាតតែ Chat ID ដែលត្រូវនឹង `TELEGRAM_STORAGE_CHAT_ID`
 - Public Catalog មិនបញ្ជូន Full Video file_id
 - Watch Page ត្រូវការ Signed Token
-- Full Video stream តាម Server proxy
 - Player បិទ download control តាម Browser UI និងបង្ហាញ Order Watermark
-- មិនមាន Web DRM ណាអាចរារាំងការថតអេក្រង់ដោយឧបករណ៍ផ្សេងបាន 100%
 
 ## Deploy
 
