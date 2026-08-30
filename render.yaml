@@ -13,6 +13,8 @@ services:
         value: iDramaAi
       - key: PUBLIC_BASE_URL
         value: https://idramaai.onrender.com
+
+      # Telegram / private media storage
       - key: BOT_TOKEN
         sync: false
       - key: TELEGRAM_BOT_USERNAME
@@ -25,6 +27,8 @@ services:
         sync: false
       - key: TELEGRAM_STORAGE_CHAT_ID
         sync: false
+
+      # Bakong KHQR receiver
       - key: BAKONG_ACCOUNT_ID
         sync: false
       - key: BAKONG_MERCHANT_NAME
@@ -35,12 +39,20 @@ services:
         value: PHNOM PENH
       - key: BAKONG_MOBILE_NUMBER
         sync: false
+
+      # Bakong Open API transaction verification
+      - key: BAKONG_API_BASE_URL
+        value: https://api-bakong.nbc.gov.kh
       - key: BAKONG_TOKEN
         sync: false
       - key: BAKONG_TEST_MODE
         value: "false"
+
+      # Stable signing secret for checkout/watch access
       - key: ACCESS_TOKEN_SECRET
         sync: false
+
+      # Admin / GitHub persistence
       - key: ADMIN_PASSWORD
         sync: false
       - key: GITHUB_TOKEN
