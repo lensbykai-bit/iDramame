@@ -19,6 +19,7 @@ const BAKONG_MOBILE_NUMBER = process.env.BAKONG_MOBILE_NUMBER || '';
 const BAKONG_STORE_LABEL = process.env.BAKONG_STORE_LABEL || 'iDramaAi';
 const BAKONG_API_BASE_URL = (process.env.BAKONG_API_BASE_URL || 'https://api-bakong.nbc.gov.kh').replace(/\/$/, '');
 const BAKONG_TOKEN = process.env.BAKONG_TOKEN || '';
+const BAKONG_TEST_MODE = /^true$/i.test(String(process.env.BAKONG_TEST_MODE || 'false').trim());
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || crypto.randomBytes(32).toString('hex');
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
@@ -35,8 +36,9 @@ const mediaUpload = multer({
   limits: { fileSize: 45 * 1024 * 1024 }
 });
 
-if (!BAKONG_ACCOUNT_ID) console.warn('[config] BAKONG_ACCOUNT_ID is missing. Checkout will be disabled.');
-if (!BAKONG_TOKEN) console.warn('[config] BAKONG_TOKEN is missing. Payment verification will be disabled.');
+if (!BAKONG_TEST_MODE && !BAKONG_ACCOUNT_ID) console.warn('[config] BAKONG_ACCOUNT_ID is missing. Checkout will be disabled.');
+if (!BAKONG_TEST_MODE && !BAKONG_TOKEN) console.warn('[config] BAKONG_TOKEN is missing. Payment verification will be disabled.');
+if (BAKONG_TEST_MODE) console.warn('[config] BAKONG_TEST_MODE=true. No real Bakong payment will be required; disable this after testing.');
 if (!process.env.ACCESS_TOKEN_SECRET) console.warn('[config] ACCESS_TOKEN_SECRET is missing. Set one in Render so watch links survive restarts.');
 if (!ADMIN_PASSWORD) console.warn('[config] ADMIN_PASSWORD is missing. Web admin will be disabled.');
 if (!GITHUB_TOKEN) console.warn('[config] GITHUB_TOKEN is missing. Admin story changes will not persist across redeploys.');
@@ -337,6 +339,22 @@ function createWatchToken(order) {
   });
 }
 
+function markOrderPaid(store, order, transactionHash, testMode = false) {
+  order.status = 'paid';
+  order.paidAt = new Date().toISOString();
+  order.transactionHash = transactionHash || '';
+  order.testMode = Boolean(testMode);
+  store.orders[order.id] = order;
+  store.purchases[order.id] = {
+    storyId: order.storyId,
+    title: order.title,
+    amount: order.amount,
+    paidAt: order.paidAt,
+    testMode: Boolean(testMode)
+  };
+  saveStore(store);
+}
+
 const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '64kb' }));
@@ -351,7 +369,8 @@ app.use(express.static(publicPath, { etag: true, maxAge: '1h' }));
 app.get('/api/meta', (_req, res) => {
   res.json({
     brand: BRAND_NAME,
-    checkout: Boolean(BAKONG_ACCOUNT_ID && BAKONG_TOKEN),
+    checkout: BAKONG_TEST_MODE || Boolean(BAKONG_ACCOUNT_ID && BAKONG_TOKEN),
+    testMode: BAKONG_TEST_MODE,
     telegramUploads: Boolean(BOT_TOKEN && TELEGRAM_STORAGE_CHAT_ID)
   });
 });
@@ -377,7 +396,7 @@ app.get('/api/media/:fileId', async (req, res) => {
 });
 
 app.post('/api/orders', async (req, res) => {
-  if (!BAKONG_ACCOUNT_ID || !BAKONG_TOKEN) {
+  if (!BAKONG_TEST_MODE && (!BAKONG_ACCOUNT_ID || !BAKONG_TOKEN)) {
     return res.status(503).json({ error: 'Bakong payment is not configured yet.' });
   }
 
@@ -394,15 +413,34 @@ app.post('/api/orders', async (req, res) => {
     amount: Number(story.price_khr),
     currency: 'KHR',
     status: 'pending',
+    testMode: BAKONG_TEST_MODE,
     createdAt: new Date().toISOString()
   };
 
   try {
+    const store = loadStore();
+
+    if (BAKONG_TEST_MODE) {
+      order.expiresAt = Date.now() + 10 * 60 * 1000;
+      order.md5 = '';
+      store.orders[order.id] = order;
+      saveStore(store);
+
+      return res.json({
+        orderId: order.id,
+        title: order.title,
+        amount: order.amount,
+        currency: order.currency,
+        expiresAt: order.expiresAt,
+        testMode: true,
+        qrDataUrl: null
+      });
+    }
+
     const khqr = generateKHQR(order);
     order.md5 = khqr.md5;
     order.expiresAt = khqr.expiresAt;
 
-    const store = loadStore();
     store.orders[order.id] = order;
     saveStore(store);
 
@@ -418,11 +456,12 @@ app.post('/api/orders', async (req, res) => {
       amount: order.amount,
       currency: order.currency,
       expiresAt: order.expiresAt,
+      testMode: false,
       qrDataUrl
     });
   } catch (error) {
     console.error('[order]', error.message);
-    res.status(500).json({ error: 'មិនអាចបង្កើត Bakong KHQR បាន។' });
+    res.status(500).json({ error: BAKONG_TEST_MODE ? 'មិនអាចបង្កើត Test Order បាន។' : 'មិនអាចបង្កើត Bakong KHQR បាន។' });
   }
 });
 
@@ -434,28 +473,29 @@ app.post('/api/orders/:id/check', async (req, res) => {
   if (order.status === 'paid') {
     return res.json({
       paid: true,
+      testMode: Boolean(order.testMode),
+      watchUrl: `/watch.html?token=${encodeURIComponent(createWatchToken(order))}`
+    });
+  }
+
+  if (order.testMode) {
+    markOrderPaid(store, order, `TEST-${order.id}`, true);
+    return res.json({
+      paid: true,
+      testMode: true,
       watchUrl: `/watch.html?token=${encodeURIComponent(createWatchToken(order))}`
     });
   }
 
   try {
     const payment = await checkPayment(order.md5);
-    if (!verifyPaymentMatchesOrder(payment, order)) return res.json({ paid: false });
+    if (!verifyPaymentMatchesOrder(payment, order)) return res.json({ paid: false, testMode: false });
 
-    order.status = 'paid';
-    order.paidAt = new Date().toISOString();
-    order.transactionHash = payment.data.hash || '';
-    store.orders[order.id] = order;
-    store.purchases[order.id] = {
-      storyId: order.storyId,
-      title: order.title,
-      amount: order.amount,
-      paidAt: order.paidAt
-    };
-    saveStore(store);
+    markOrderPaid(store, order, payment.data.hash || '', false);
 
     res.json({
       paid: true,
+      testMode: false,
       watchUrl: `/watch.html?token=${encodeURIComponent(createWatchToken(order))}`
     });
   } catch (error) {
@@ -618,6 +658,7 @@ app.get('/health', (_req, res) => {
     ok: true,
     service: 'idramaai',
     brand: BRAND_NAME,
+    bakongTestMode: BAKONG_TEST_MODE,
     telegramUploads: Boolean(BOT_TOKEN && TELEGRAM_STORAGE_CHAT_ID)
   });
 });
