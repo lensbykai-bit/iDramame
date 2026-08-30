@@ -35,6 +35,12 @@
         <h2 id="formTitle">➕ បន្ថែមរឿងថ្មី</h2>
         <form id="storyForm" class="admin-form">
           <input id="storyId" type="hidden" />
+          <input id="coverFileId" type="hidden" />
+          <input id="trailerFileId" type="hidden" />
+          <input id="fullFileId" type="hidden" />
+          <input id="coverLegacyUrl" type="hidden" />
+          <input id="trailerLegacyUrl" type="hidden" />
+          <input id="fullLegacyUrl" type="hidden" />
 
           <label>ទីតាំងរឿង
             <select id="placement" class="admin-input" required>
@@ -46,23 +52,35 @@
           <label>ចំណងជើង<input id="title" class="admin-input" required placeholder="ឈ្មោះរឿង" /></label>
           <label>Preview / Description<textarea id="preview" class="admin-input admin-textarea" placeholder="អត្ថបទពិពណ៌នារឿង..."></textarea></label>
           <label>តម្លៃ (៛)<input id="price" class="admin-input" type="number" min="0" step="100" value="5000" required /></label>
-          <label>Cover Image URL<input id="coverUrl" class="admin-input" type="url" placeholder="https://.../cover.jpg" /></label>
-          <label>Trailer Video URL<input id="trailerUrl" class="admin-input" type="url" placeholder="https://.../trailer.mp4" /></label>
 
-          <label id="webVideoField">Full Video URL — សម្រាប់រឿងខ្លីក្នុង Web
-            <span class="muted">(មិនបង្ហាញក្នុង Public Catalog)</span>
-            <input id="fullUrl" class="admin-input" type="url" placeholder="https://.../full-video.mp4" />
-          </label>
+          <div id="webUploadFields">
+            <label>Cover Image — Upload ទៅ Telegram
+              <input id="coverFile" class="admin-input" type="file" accept="image/*" />
+              <span id="coverStatus" class="muted">មិនទាន់ជ្រើសរូប</span>
+            </label>
+
+            <label>Trailer Video — Upload ទៅ Telegram
+              <input id="trailerFile" class="admin-input" type="file" accept="video/*" />
+              <span id="trailerStatus" class="muted">មិនទាន់ជ្រើសវីដេអូ</span>
+            </label>
+
+            <label>Full Video — Upload ទៅ Telegram
+              <input id="fullFile" class="admin-input" type="file" accept="video/*" />
+              <span id="fullStatus" class="muted">មិនទាន់ជ្រើសវីដេអូពេញ</span>
+            </label>
+
+            <div class="status">📤 អ្នកមិនចាំបាច់មាន Link ទេ។ ពេលចុច “រក្សាទុក” File នឹង Upload ទៅ Telegram Bot មុន ហើយ Server រក្សា Telegram file_id ដោយស្វ័យប្រវត្តិ។</div>
+          </div>
 
           <label id="telegramField" hidden>Telegram Video / Post Link — សម្រាប់រឿងវែង
-            <span class="muted">Upload រឿងទៅ Telegram ជាមុន ហើយ Paste link របស់ Message/Video នៅទីនេះ។</span>
+            <span class="muted">Upload រឿងវែងទៅ Telegram ជាមុន ហើយ Paste link របស់ Message/Post នៅទីនេះ។</span>
             <input id="telegramUrl" class="admin-input" type="url" placeholder="https://t.me/..." />
           </label>
 
-          <div id="placementHint" class="status">🌐 Web: រឿងខ្លីនឹងបង្ហាញនៅ Website និងអាចទិញតាម Bakong KHQR។</div>
+          <div id="placementHint" class="status">🌐 Web: រឿងខ្លីនឹងបង្ហាញនៅ Website។ Cover, Trailer និង Full Video ត្រូវបានរក្សាទុកក្នុង Telegram។</div>
 
           <div class="admin-actions">
-            <button class="primary-btn" type="submit">💾 រក្សាទុក</button>
+            <button class="primary-btn" type="submit">💾 Upload + រក្សាទុក</button>
             <button id="cancelEdit" class="ghost-btn" type="button" hidden>បោះបង់កែ</button>
           </div>
           <div id="formStatus" class="status" hidden></div>
@@ -78,7 +96,7 @@
         <div class="security-icon">ℹ️</div>
         <div>
           <h3>របៀបដាក់រឿង</h3>
-          <p><strong>រឿងខ្លី:</strong> ជ្រើស Web ហើយដាក់ Full Video URL។ <strong>រឿងវែង:</strong> ជ្រើស Telegram ហើយដាក់ Telegram Video/Post Link។ Website នឹងបង្ហាញតែរឿងខ្លី ខណៈ Bot នឹងបង្ហាញតែរឿងវែង។</p>
+          <p><strong>រឿងខ្លី:</strong> ជ្រើស Web → ជ្រើស Cover/Trailer/Full Video ពីម៉ាស៊ីន → Save។ File ត្រូវ Upload ទៅ Telegram ដោយស្វ័យប្រវត្តិ។ <strong>រឿងវែង:</strong> Upload នៅ Telegram ផ្ទាល់ ហើយដាក់ Telegram Post Link។</p>
         </div>
       </section>
     </section>
