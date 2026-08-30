@@ -4,17 +4,21 @@
     "title": "រឿងខ្លីទី ១",
     "preview": "🎬 Preview រឿងខ្លីទី ១។ អ្នកអាចកែចំណងជើង អត្ថបទ Cover និង Trailer តាម Admin Web។",
     "price_khr": 5000,
+    "placement": "web",
     "cover_url": "",
     "preview_video_url": "",
-    "full_video_url": ""
+    "full_video_url": "",
+    "telegram_url": ""
   },
   {
     "id": "story002",
     "title": "រឿងខ្លីទី ២",
     "preview": "🎬 Preview រឿងខ្លីទី ២។ ទិញតាម Bakong KHQR ហើយមើល Full Video នៅ Watch Page។",
     "price_khr": 5000,
+    "placement": "web",
     "cover_url": "",
     "preview_video_url": "",
-    "full_video_url": ""
+    "full_video_url": "",
+    "telegram_url": ""
   }
 ]
