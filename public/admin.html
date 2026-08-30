@@ -50,32 +50,14 @@
       </div>
 
       <section class="admin-overview" aria-label="System overview">
-        <article class="overview-card">
-          <span class="overview-icon">🎬</span>
-          <div><strong id="statStories">0</strong><span>រឿងសរុប</span></div>
-        </article>
-        <article class="overview-card">
-          <span class="overview-icon">🔐</span>
-          <div><strong id="statFull">0</strong><span>Full Movie Ready</span></div>
-        </article>
-        <article class="overview-card">
-          <span class="overview-icon">🇰🇭</span>
-          <div><strong id="statBakong">Checking…</strong><span>Bakong KHQR</span></div>
-        </article>
-        <article class="overview-card">
-          <span class="overview-icon">☁️</span>
-          <div><strong id="statMedia">Checking…</strong><span>Media Storage</span></div>
-        </article>
+        <article class="overview-card"><span class="overview-icon">🎬</span><div><strong id="statStories">0</strong><span>រឿងសរុប</span></div></article>
+        <article class="overview-card"><span class="overview-icon">🔐</span><div><strong id="statFull">0</strong><span>Full Movie Ready</span></div></article>
+        <article class="overview-card"><span class="overview-icon">🇰🇭</span><div><strong id="statBakong">Checking…</strong><span>Bakong KHQR</span></div></article>
+        <article class="overview-card"><span class="overview-icon">☁️</span><div><strong id="statMedia">Checking…</strong><span>Media Storage</span></div></article>
       </section>
 
       <section class="system-panel admin-panel">
-        <div class="system-head">
-          <div>
-            <div class="eyebrow">SYSTEM STATUS</div>
-            <h2>ស្ថានភាពប្រព័ន្ធ</h2>
-          </div>
-          <span id="systemOverall" class="system-badge">កំពុងពិនិត្យ…</span>
-        </div>
+        <div class="system-head"><div><div class="eyebrow">SYSTEM STATUS</div><h2>ស្ថានភាពប្រព័ន្ធ</h2></div><span id="systemOverall" class="system-badge">កំពុងពិនិត្យ…</span></div>
         <div class="system-grid">
           <div class="system-item"><span>Bakong Checkout</span><strong id="bakongStatus">កំពុងពិនិត្យ…</strong></div>
           <div class="system-item"><span>Payment Mode</span><strong id="paymentMode">—</strong></div>
@@ -87,10 +69,7 @@
 
       <section class="admin-panel story-editor-panel">
         <div class="editor-title-row">
-          <div>
-            <div class="eyebrow">STORY EDITOR</div>
-            <h2 id="formTitle">➕ បន្ថែមរឿងថ្មី</h2>
-          </div>
+          <div><div class="eyebrow">STORY EDITOR</div><h2 id="formTitle">➕ បន្ថែមរឿងថ្មី</h2></div>
           <button id="cancelEdit" class="ghost-btn" type="button" hidden>បោះបង់កែ</button>
         </div>
 
@@ -104,20 +83,14 @@
           <input id="fullLegacyUrl" type="hidden" />
 
           <div class="form-grid form-grid-main">
-            <label>ចំណងជើងរឿង
-              <input id="title" class="admin-input" required placeholder="ឧ. រឿង អ្នកប្រម៉ាញវត្ថុបុរាណ" />
-            </label>
-            <label>តម្លៃ (៛)
-              <input id="price" class="admin-input" type="number" min="0" step="100" value="5000" required />
-            </label>
+            <label>ចំណងជើងរឿង<input id="title" class="admin-input" required placeholder="ឧ. រឿង អ្នកប្រម៉ាញវត្ថុបុរាណ" /></label>
+            <label>តម្លៃ (៛)<input id="price" class="admin-input" type="number" min="0" step="100" value="5000" required /></label>
           </div>
 
-          <label>Preview / Description
-            <textarea id="preview" class="admin-input admin-textarea" placeholder="សរសេរពិពណ៌នាខ្លីៗអំពីរឿង..."></textarea>
-          </label>
+          <label>Preview / Description<textarea id="preview" class="admin-input admin-textarea" placeholder="សរសេរពិពណ៌នាខ្លីៗអំពីរឿង..."></textarea></label>
 
           <div class="upload-section">
-            <div class="upload-title"><strong>Media Files</strong><span class="muted">Cover + Trailer + Full Movie</span></div>
+            <div class="upload-title"><strong>Media Files</strong><span class="muted">Cover + Full Movie</span></div>
             <div id="mediaUploadFields" class="media-upload-grid">
               <label class="upload-card">
                 <span class="upload-emoji">🖼️</span>
@@ -127,14 +100,6 @@
                 <span id="coverStatus" class="upload-state">មិនទាន់ជ្រើសរូប</span>
               </label>
 
-              <label class="upload-card">
-                <span class="upload-emoji">🎞️</span>
-                <strong>Trailer Video</strong>
-                <small>Preview សម្រាប់មើលមុនទិញ</small>
-                <input id="trailerFile" class="admin-input" type="file" accept="video/*" />
-                <span id="trailerStatus" class="upload-state">មិនទាន់ជ្រើសវីដេអូ</span>
-              </label>
-
               <label class="upload-card protected-upload">
                 <span class="upload-emoji">🔐</span>
                 <strong>Full Movie</strong>
@@ -142,12 +107,15 @@
                 <input id="fullFile" class="admin-input" type="file" accept="video/*" />
                 <span id="fullStatus" class="upload-state">មិនទាន់ជ្រើស Full Movie</span>
               </label>
+
+              <input id="trailerFile" type="file" accept="video/*" hidden />
+              <span id="trailerStatus" hidden></span>
             </div>
           </div>
 
           <div class="admin-payment-note">
             <span>🇰🇭</span>
-            <div><strong>Bakong KHQR Checkout</strong><p>អ្នកកំណត់តម្លៃនៅទីនេះ។ Customer មើល Trailer → បង់ Bakong KHQR → Server verify → Unlock Full Movie។</p></div>
+            <div><strong>Bakong KHQR Checkout</strong><p>អ្នកកំណត់តម្លៃនៅទីនេះ។ Customer ជ្រើសរឿង → បង់ Bakong KHQR → Server verify → Unlock Full Movie។</p></div>
           </div>
 
           <div class="admin-actions editor-actions">
@@ -161,10 +129,7 @@
       <section class="section catalog-admin-section">
         <div class="section-head admin-catalog-head">
           <div><div class="eyebrow">WEBSITE CATALOG</div><h2>រឿងទាំងអស់</h2></div>
-          <div class="catalog-tools">
-            <input id="adminSearch" class="admin-input admin-search" type="search" placeholder="🔎 ស្វែងរករឿង..." />
-            <span id="adminCount" class="muted"></span>
-          </div>
+          <div class="catalog-tools"><input id="adminSearch" class="admin-input admin-search" type="search" placeholder="🔎 ស្វែងរករឿង..." /><span id="adminCount" class="muted"></span></div>
         </div>
         <div id="adminStories" class="admin-story-list"><div class="loading">កំពុងផ្ទុក…</div></div>
       </section>
