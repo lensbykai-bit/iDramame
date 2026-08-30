@@ -11,13 +11,13 @@ function hideStatus(el){ el.hidden=true; }
 function placementOf(s){ return s.placement === 'telegram' ? 'telegram' : 'web'; }
 
 function updatePlacementUI(){
-  const placement = $('#placement').value;
-  const telegram = placement === 'telegram';
-  $('#webUploadFields').hidden = telegram;
-  $('#telegramField').hidden = !telegram;
+  const telegram = $('#placement').value === 'telegram';
+  $('#fullMediaLabel').firstChild.textContent = telegram
+    ? 'Full Movie — ជ្រើសរឿងវែងពេញ '
+    : 'Full Video — ជ្រើសវីដេអូពេញ ';
   $('#placementHint').textContent = telegram
-    ? '✈️ Telegram: រឿងវែង Upload នៅ Telegram ផ្ទាល់ ហើយដាក់ Post Link។ រឿងនេះមិនបង្ហាញក្នុង Website Catalog ទេ។'
-    : '🌐 Web: រឿងខ្លីបង្ហាញនៅ Website។ Cover, Trailer និង Full Video នឹង Upload ទៅ Telegram ដោយស្វ័យប្រវត្តិ។';
+    ? '✈️ Telegram: Cover, Trailer និង Full Movie នឹង Upload ទៅ Telegram។ Bot នឹងបង្ហាញរឿងនេះក្នុង Catalog រឿងវែង។'
+    : '🌐 Web: រឿងខ្លីនឹងបង្ហាញនៅ Website។ Cover, Trailer និង Full Video នឹង Upload ទៅ Telegram សម្រាប់រក្សាទុក។';
 }
 
 function mediaReady(s, type){
@@ -44,7 +44,7 @@ async function uploadMedia(kind, inputId, existingFileId){
   const file = input?.files?.[0];
   if(!file) return existingFileId || '';
 
-  setMediaStatus(kind === 'cover' ? 'cover' : kind, false, `⏳ កំពុង Upload ${file.name} ទៅ Telegram…`);
+  setMediaStatus(kind, false, `⏳ កំពុង Upload ${file.name} ទៅ Telegram…`);
   const form = new FormData();
   form.append('kind', kind);
   form.append('file', file);
@@ -57,7 +57,7 @@ async function uploadMedia(kind, inputId, existingFileId){
   const data = await res.json().catch(()=>({}));
   if(!res.ok) throw new Error(data.error || `Upload failed (${res.status})`);
 
-  setMediaStatus(kind === 'cover' ? 'cover' : kind, true, `✅ Upload រួច: ${file.name}`);
+  setMediaStatus(kind, true, `✅ Upload រួច: ${file.name}`);
   return data.fileId || '';
 }
 
@@ -71,9 +71,7 @@ async function login(){
     $('#loginPanel').hidden = true;
     $('#dashboard').hidden = false;
     renderStories();
-  }catch(err){
-    showStatus($('#loginStatus'), err.message, 'error');
-  }
+  }catch(err){ showStatus($('#loginStatus'), err.message, 'error'); }
 }
 
 async function loadDashboard(){
@@ -97,9 +95,9 @@ function renderStories(){
     const placeTag = placement === 'telegram' ? '✈️ Telegram • រឿងវែង' : '🌐 Web • រឿងខ្លី';
     const coverTag = mediaReady(s,'cover') ? '🖼️ Cover ready' : '⚪ No cover';
     const trailerTag = mediaReady(s,'trailer') ? '✅ Trailer ready' : '⚪ No trailer';
-    const readyTag = placement === 'telegram'
-      ? (s.telegram_url ? '✅ Telegram ready' : '⚠️ No Telegram link')
-      : (mediaReady(s,'full') ? '🔐 Full ready' : '⚠️ No full video');
+    const fullTag = mediaReady(s,'full')
+      ? (placement === 'telegram' ? '🎬 Full Movie ready' : '🔐 Full Video ready')
+      : (s.telegram_url ? '🔗 Legacy Telegram link' : '⚠️ No full video');
     const coverSrc = s.cover_file_id ? `/api/media/${encodeURIComponent(s.cover_file_id)}` : (s.cover_url || '');
     return `
     <article class="admin-story-card">
@@ -108,7 +106,7 @@ function renderStories(){
         <h3>${esc(s.title)}</h3>
         <div class="muted">${money(s.price_khr)} • ID: ${esc(s.id)}</div>
         <p>${esc(s.preview || '')}</p>
-        <div class="admin-tags"><span>${placeTag}</span><span>${coverTag}</span><span>${trailerTag}</span><span>${readyTag}</span></div>
+        <div class="admin-tags"><span>${placeTag}</span><span>${coverTag}</span><span>${trailerTag}</span><span>${fullTag}</span></div>
       </div>
       <div class="admin-card-actions">
         <button class="ghost-btn" data-edit="${esc(s.id)}">កែ</button>
@@ -129,6 +127,7 @@ function resetForm(){
   $('#coverLegacyUrl').value='';
   $('#trailerLegacyUrl').value='';
   $('#fullLegacyUrl').value='';
+  $('#telegramUrl').value='';
   $('#formTitle').textContent='➕ បន្ថែមរឿងថ្មី';
   $('#cancelEdit').hidden=true;
   setMediaStatus('cover', false, 'មិនទាន់ជ្រើសរូប');
@@ -175,14 +174,12 @@ async function saveStory(e){
     let trailerFileId = $('#trailerFileId').value.trim();
     let fullFileId = $('#fullFileId').value.trim();
 
-    if(placement === 'web'){
-      coverFileId = await uploadMedia('cover','coverFile',coverFileId);
-      $('#coverFileId').value = coverFileId;
-      trailerFileId = await uploadMedia('trailer','trailerFile',trailerFileId);
-      $('#trailerFileId').value = trailerFileId;
-      fullFileId = await uploadMedia('full','fullFile',fullFileId);
-      $('#fullFileId').value = fullFileId;
-    }
+    coverFileId = await uploadMedia('cover','coverFile',coverFileId);
+    $('#coverFileId').value = coverFileId;
+    trailerFileId = await uploadMedia('trailer','trailerFile',trailerFileId);
+    $('#trailerFileId').value = trailerFileId;
+    fullFileId = await uploadMedia('full','fullFile',fullFileId);
+    $('#fullFileId').value = fullFileId;
 
     showStatus($('#formStatus'),'⏳ កំពុងរក្សាទុក Story…');
     const body={
@@ -191,9 +188,9 @@ async function saveStory(e){
       title: $('#title').value.trim(),
       preview: $('#preview').value.trim(),
       price_khr: Number($('#price').value),
-      cover_file_id: placement === 'web' ? coverFileId : '',
-      preview_video_file_id: placement === 'web' ? trailerFileId : '',
-      full_video_file_id: placement === 'web' ? fullFileId : '',
+      cover_file_id: coverFileId,
+      preview_video_file_id: trailerFileId,
+      full_video_file_id: fullFileId,
       cover_url: placement === 'web' ? $('#coverLegacyUrl').value.trim() : '',
       preview_video_url: placement === 'web' ? $('#trailerLegacyUrl').value.trim() : '',
       full_video_url: placement === 'web' ? $('#fullLegacyUrl').value.trim() : '',
@@ -202,15 +199,15 @@ async function saveStory(e){
 
     const saved = await api('/api/admin/stories',{method:'POST',body:JSON.stringify(body)});
     if(saved.persistedToGitHub === false){
-      showStatus($('#formStatus'),'⚠️ File បាន Upload ទៅ Telegram ហើយ ប៉ុន្តែ Story រក្សាទុកលើ Server ប៉ុណ្ណោះ។ សូមពិនិត្យ GITHUB_TOKEN។','error');
+      showStatus($('#formStatus'),'⚠️ Media បាន Upload ទៅ Telegram ហើយ ប៉ុន្តែ Story រក្សាទុកលើ Server ប៉ុណ្ណោះ។ សូមពិនិត្យ GITHUB_TOKEN។','error');
     }else{
-      showStatus($('#formStatus'),'✅ Upload ទៅ Telegram + រក្សាទុកជោគជ័យ','success');
+      showStatus($('#formStatus'), placement === 'telegram'
+        ? '✅ រឿងវែងបាន Upload ទៅ Telegram + រក្សាទុកជោគជ័យ'
+        : '✅ រឿងខ្លីបាន Upload ទៅ Telegram + រក្សាទុកជោគជ័យ','success');
     }
     const data=await api('/api/admin/stories'); stories=data.stories||[]; renderStories();
     if(saved.persistedToGitHub !== false) setTimeout(resetForm,900);
-  }catch(err){
-    showStatus($('#formStatus'),err.message,'error');
-  }
+  }catch(err){ showStatus($('#formStatus'),err.message,'error'); }
   if(btn) btn.disabled=false;
 }
 
