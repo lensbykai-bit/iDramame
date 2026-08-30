@@ -3,21 +3,11 @@ const SESSION_KEY = 'iDramaAiAdminPassword';
 let password = sessionStorage.getItem(SESSION_KEY) || '';
 let stories = [];
 
-function esc(v=''){ return String(v).replace(/[&<>'\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c])); }
+function esc(v=''){ return String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
 function money(v){ return `${Number(v || 0).toLocaleString('en-US')}៛`; }
 function headers(){ return {'Content-Type':'application/json','x-admin-password':password}; }
 function showStatus(el, text, type=''){ el.hidden=false; el.className=`status ${type}`; el.textContent=text; }
 function hideStatus(el){ el.hidden=true; }
-function placementOf(s){ return s.placement === 'telegram' ? 'telegram' : 'web'; }
-
-function updatePlacementUI(){
-  const telegram = $('#placement').value === 'telegram';
-  $('#fullMediaLabel').hidden = telegram;
-  $('#telegramLargeMovieHelp').hidden = !telegram;
-  $('#placementHint').textContent = telegram
-    ? '✈️ Telegram: Upload Cover + Trailer នៅទីនេះ → Save → ទៅ Bot /adminmovies ដើម្បីភ្ជាប់ Full Movie ធំៗ។'
-    : '🌐 Web: Cover, Trailer និង Full Video អាច Upload ពី Admin ហើយរក្សាទុកក្នុង Telegram។';
-}
 
 function mediaReady(s, type){
   if(type === 'cover') return Boolean(s.cover_file_id || s.cover_url);
@@ -43,7 +33,7 @@ async function uploadMedia(kind, inputId, existingFileId){
   const file = input?.files?.[0];
   if(!file) return existingFileId || '';
 
-  setMediaStatus(kind, false, `⏳ កំពុង Upload ${file.name} ទៅ Telegram…`);
+  setMediaStatus(kind, false, `⏳ កំពុង Upload ${file.name}…`);
   const form = new FormData();
   form.append('kind', kind);
   form.append('file', file);
@@ -53,6 +43,7 @@ async function uploadMedia(kind, inputId, existingFileId){
     headers: {'x-admin-password': password},
     body: form
   });
+
   const data = await res.json().catch(()=>({}));
   if(!res.ok) throw new Error(data.error || `Upload failed (${res.status})`);
 
@@ -63,6 +54,7 @@ async function uploadMedia(kind, inputId, existingFileId){
 async function login(){
   password = $('#password').value.trim();
   if(!password) return showStatus($('#loginStatus'),'សូមបញ្ចូល Password','error');
+
   try{
     const data = await api('/api/admin/stories');
     sessionStorage.setItem(SESSION_KEY, password);
@@ -70,7 +62,9 @@ async function login(){
     $('#loginPanel').hidden = true;
     $('#dashboard').hidden = false;
     renderStories();
-  }catch(err){ showStatus($('#loginStatus'), err.message, 'error'); }
+  }catch(err){
+    showStatus($('#loginStatus'), err.message, 'error');
+  }
 }
 
 async function loadDashboard(){
@@ -89,18 +83,13 @@ async function loadDashboard(){
 
 function renderStories(){
   $('#adminCount').textContent = `${stories.length} រឿង`;
+
   $('#adminStories').innerHTML = stories.length ? stories.map(s=>{
-    const placement = placementOf(s);
-    const placeTag = placement === 'telegram' ? '✈️ Telegram • រឿងវែង' : '🌐 Web • រឿងខ្លី';
     const coverTag = mediaReady(s,'cover') ? '🖼️ Cover ready' : '⚪ No cover';
     const trailerTag = mediaReady(s,'trailer') ? '✅ Trailer ready' : '⚪ No trailer';
-    const fullTag = mediaReady(s,'full')
-      ? (placement === 'telegram' ? '🎬 Full Movie ready' : '🔐 Full Video ready')
-      : (placement === 'telegram' ? '📥 Attach via /adminmovies' : '⚠️ No full video');
-    const sizeTag = placement === 'telegram' && s.full_video_size
-      ? `<span>📦 ${(Number(s.full_video_size)/1024/1024).toFixed(1)} MB</span>`
-      : '';
+    const fullTag = mediaReady(s,'full') ? '🔐 Full Movie ready' : '⚠️ No Full Movie';
     const coverSrc = s.cover_file_id ? `/api/media/${encodeURIComponent(s.cover_file_id)}` : (s.cover_url || '');
+
     return `
     <article class="admin-story-card">
       <div class="admin-thumb">${coverSrc ? `<img src="${esc(coverSrc)}" alt="">` : '<span>AI</span>'}</div>
@@ -108,7 +97,12 @@ function renderStories(){
         <h3>${esc(s.title)}</h3>
         <div class="muted">${money(s.price_khr)} • ID: ${esc(s.id)}</div>
         <p>${esc(s.preview || '')}</p>
-        <div class="admin-tags"><span>${placeTag}</span><span>${coverTag}</span><span>${trailerTag}</span><span>${fullTag}</span>${sizeTag}</div>
+        <div class="admin-tags">
+          <span>🌐 Website</span>
+          <span>${coverTag}</span>
+          <span>${trailerTag}</span>
+          <span>${fullTag}</span>
+        </div>
       </div>
       <div class="admin-card-actions">
         <button class="ghost-btn" data-edit="${esc(s.id)}">កែ</button>
@@ -121,7 +115,6 @@ function renderStories(){
 function resetForm(){
   $('#storyForm').reset();
   $('#price').value='5000';
-  $('#placement').value='web';
   $('#storyId').value='';
   $('#coverFileId').value='';
   $('#trailerFileId').value='';
@@ -129,20 +122,19 @@ function resetForm(){
   $('#coverLegacyUrl').value='';
   $('#trailerLegacyUrl').value='';
   $('#fullLegacyUrl').value='';
-  $('#telegramUrl').value='';
   $('#formTitle').textContent='➕ បន្ថែមរឿងថ្មី';
   $('#cancelEdit').hidden=true;
   setMediaStatus('cover', false, 'មិនទាន់ជ្រើសរូប');
   setMediaStatus('trailer', false, 'មិនទាន់ជ្រើសវីដេអូ');
-  setMediaStatus('full', false, 'មិនទាន់ជ្រើសវីដេអូពេញ');
+  setMediaStatus('full', false, 'មិនទាន់ជ្រើស Full Movie');
   hideStatus($('#formStatus'));
-  updatePlacementUI();
 }
 
 function editStory(id){
-  const s=stories.find(x=>x.id===id); if(!s) return;
+  const s=stories.find(x=>x.id===id);
+  if(!s) return;
+
   $('#storyId').value=s.id;
-  $('#placement').value=placementOf(s);
   $('#title').value=s.title || '';
   $('#preview').value=s.preview || '';
   $('#price').value=s.price_khr || 0;
@@ -152,24 +144,24 @@ function editStory(id){
   $('#coverLegacyUrl').value=s.cover_url || '';
   $('#trailerLegacyUrl').value=s.preview_video_url || '';
   $('#fullLegacyUrl').value=s.full_video_url || '';
-  $('#telegramUrl').value=s.telegram_url || '';
   $('#coverFile').value='';
   $('#trailerFile').value='';
   $('#fullFile').value='';
+
   setMediaStatus('cover', mediaReady(s,'cover'), mediaReady(s,'cover') ? '✅ Cover មានរួច — ជ្រើស File ថ្មីបើចង់ប្តូរ' : 'មិនទាន់មាន Cover');
   setMediaStatus('trailer', mediaReady(s,'trailer'), mediaReady(s,'trailer') ? '✅ Trailer មានរួច — ជ្រើស File ថ្មីបើចង់ប្តូរ' : 'មិនទាន់មាន Trailer');
-  setMediaStatus('full', mediaReady(s,'full'), mediaReady(s,'full') ? '✅ Full Video មានរួច' : 'មិនទាន់មាន Full Video');
+  setMediaStatus('full', mediaReady(s,'full'), mediaReady(s,'full') ? '✅ Full Movie មានរួច — ជ្រើស File ថ្មីបើចង់ប្តូរ' : 'មិនទាន់មាន Full Movie');
+
   $('#formTitle').textContent=`✏️ កែ៖ ${s.title}`;
   $('#cancelEdit').hidden=false;
-  updatePlacementUI();
   window.scrollTo({top:0,behavior:'smooth'});
 }
 
 async function saveStory(e){
   e.preventDefault();
-  const placement = $('#placement').value;
-  const btn=e.submitter; if(btn) btn.disabled=true;
-  showStatus($('#formStatus'),'កំពុងរៀបចំ…');
+  const btn=e.submitter;
+  if(btn) btn.disabled=true;
+  showStatus($('#formStatus'),'⏳ កំពុង Upload និងរក្សាទុក…');
 
   try{
     let coverFileId = $('#coverFileId').value.trim();
@@ -178,53 +170,74 @@ async function saveStory(e){
 
     coverFileId = await uploadMedia('cover','coverFile',coverFileId);
     $('#coverFileId').value = coverFileId;
+
     trailerFileId = await uploadMedia('trailer','trailerFile',trailerFileId);
     $('#trailerFileId').value = trailerFileId;
 
-    if(placement === 'web'){
-      fullFileId = await uploadMedia('full','fullFile',fullFileId);
-      $('#fullFileId').value = fullFileId;
-    }
+    fullFileId = await uploadMedia('full','fullFile',fullFileId);
+    $('#fullFileId').value = fullFileId;
 
-    showStatus($('#formStatus'),'⏳ កំពុងរក្សាទុក Story…');
     const body={
       id: $('#storyId').value.trim(),
-      placement,
+      placement: 'web',
       title: $('#title').value.trim(),
       preview: $('#preview').value.trim(),
       price_khr: Number($('#price').value),
       cover_file_id: coverFileId,
       preview_video_file_id: trailerFileId,
       full_video_file_id: fullFileId,
-      cover_url: placement === 'web' ? $('#coverLegacyUrl').value.trim() : '',
-      preview_video_url: placement === 'web' ? $('#trailerLegacyUrl').value.trim() : '',
-      full_video_url: placement === 'web' ? $('#fullLegacyUrl').value.trim() : '',
-      telegram_url: placement === 'telegram' ? $('#telegramUrl').value.trim() : ''
+      cover_url: $('#coverLegacyUrl').value.trim(),
+      preview_video_url: $('#trailerLegacyUrl').value.trim(),
+      full_video_url: $('#fullLegacyUrl').value.trim(),
+      telegram_url: ''
     };
 
-    const saved = await api('/api/admin/stories',{method:'POST',body:JSON.stringify(body)});
+    const saved = await api('/api/admin/stories',{
+      method:'POST',
+      body:JSON.stringify(body)
+    });
+
     if(saved.persistedToGitHub === false){
-      showStatus($('#formStatus'),'⚠️ Media បាន Upload ទៅ Telegram ហើយ ប៉ុន្តែ Story រក្សាទុកលើ Server ប៉ុណ្ណោះ។ សូមពិនិត្យ GITHUB_TOKEN។','error');
-    }else if(placement === 'telegram' && !fullFileId){
-      showStatus($('#formStatus'),'✅ រក្សាទុករឿងវែងរួច។ ឥឡូវចូល @iDramaAiBot → /adminmovies → ជ្រើសរឿង → ផ្ញើ Full Movie ធំៗ។','success');
+      showStatus(
+        $('#formStatus'),
+        '⚠️ Media បាន Upload រួច ប៉ុន្តែ Story រក្សាទុកលើ Server ប៉ុណ្ណោះ។ សូមពិនិត្យ GITHUB_TOKEN។',
+        'error'
+      );
     }else{
-      showStatus($('#formStatus'),'✅ Upload + រក្សាទុកជោគជ័យ','success');
+      showStatus(
+        $('#formStatus'),
+        '✅ រក្សាទុកជោគជ័យ — រឿងនេះបង្ហាញនៅ Website ហើយ Full Movie ត្រូវបង់ Bakong មុនមើល។',
+        'success'
+      );
     }
 
-    const data=await api('/api/admin/stories'); stories=data.stories||[]; renderStories();
+    const data=await api('/api/admin/stories');
+    stories=data.stories||[];
+    renderStories();
+
     if(saved.persistedToGitHub !== false) setTimeout(resetForm,1400);
-  }catch(err){ showStatus($('#formStatus'),err.message,'error'); }
+  }catch(err){
+    showStatus($('#formStatus'),err.message,'error');
+  }
+
   if(btn) btn.disabled=false;
 }
 
 async function deleteStory(id){
-  const s=stories.find(x=>x.id===id); if(!s) return;
+  const s=stories.find(x=>x.id===id);
+  if(!s) return;
   if(!confirm(`លុប “${s.title}” មែនទេ?`)) return;
+
   try{
     const deleted = await api(`/api/admin/stories/${encodeURIComponent(id)}`,{method:'DELETE'});
-    stories=stories.filter(x=>x.id!==id); renderStories();
-    if(deleted.persistedToGitHub === false) alert('រឿងត្រូវបានលុបលើ Server ប៉ុណ្ណោះ។ សូមពិនិត្យ GITHUB_TOKEN។');
-  }catch(err){ alert(err.message); }
+    stories=stories.filter(x=>x.id!==id);
+    renderStories();
+    if(deleted.persistedToGitHub === false){
+      alert('រឿងត្រូវបានលុបលើ Server ប៉ុណ្ណោះ។ សូមពិនិត្យ GITHUB_TOKEN។');
+    }
+  }catch(err){
+    alert(err.message);
+  }
 }
 
 $('#loginBtn').addEventListener('click', login);
@@ -232,14 +245,29 @@ $('#password').addEventListener('keydown', e=>{ if(e.key==='Enter') login(); });
 $('#logoutBtn').addEventListener('click',()=>{ sessionStorage.removeItem(SESSION_KEY); location.reload(); });
 $('#storyForm').addEventListener('submit', saveStory);
 $('#cancelEdit').addEventListener('click', resetForm);
-$('#placement').addEventListener('change', updatePlacementUI);
-$('#coverFile').addEventListener('change',()=>setMediaStatus('cover',Boolean($('#coverFile').files[0]),$('#coverFile').files[0] ? `📎 ${$('#coverFile').files[0].name}` : 'មិនទាន់ជ្រើសរូប'));
-$('#trailerFile').addEventListener('change',()=>setMediaStatus('trailer',Boolean($('#trailerFile').files[0]),$('#trailerFile').files[0] ? `📎 ${$('#trailerFile').files[0].name}` : 'មិនទាន់ជ្រើសវីដេអូ'));
-$('#fullFile').addEventListener('change',()=>setMediaStatus('full',Boolean($('#fullFile').files[0]),$('#fullFile').files[0] ? `📎 ${$('#fullFile').files[0].name}` : 'មិនទាន់ជ្រើសវីដេអូពេញ'));
+
+$('#coverFile').addEventListener('change',()=>setMediaStatus(
+  'cover',
+  Boolean($('#coverFile').files[0]),
+  $('#coverFile').files[0] ? `📎 ${$('#coverFile').files[0].name}` : 'មិនទាន់ជ្រើសរូប'
+));
+$('#trailerFile').addEventListener('change',()=>setMediaStatus(
+  'trailer',
+  Boolean($('#trailerFile').files[0]),
+  $('#trailerFile').files[0] ? `📎 ${$('#trailerFile').files[0].name}` : 'មិនទាន់ជ្រើសវីដេអូ'
+));
+$('#fullFile').addEventListener('change',()=>setMediaStatus(
+  'full',
+  Boolean($('#fullFile').files[0]),
+  $('#fullFile').files[0] ? `📎 ${$('#fullFile').files[0].name}` : 'មិនទាន់ជ្រើស Full Movie'
+));
+
 $('#adminStories').addEventListener('click',e=>{
-  const edit=e.target.closest('[data-edit]'); if(edit) editStory(edit.dataset.edit);
-  const del=e.target.closest('[data-delete]'); if(del) deleteStory(del.dataset.delete);
+  const edit=e.target.closest('[data-edit]');
+  if(edit) editStory(edit.dataset.edit);
+
+  const del=e.target.closest('[data-delete]');
+  if(del) deleteStory(del.dataset.delete);
 });
 
-updatePlacementUI();
 loadDashboard();
