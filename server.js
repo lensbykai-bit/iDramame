@@ -22,7 +22,7 @@ const BAKONG_API_BASE_URL = (process.env.BAKONG_API_BASE_URL || 'https://api-bak
 const BAKONG_TOKEN = process.env.BAKONG_TOKEN || '';
 const BAKONG_TEST_MODE = /^true$/i.test(String(process.env.BAKONG_TEST_MODE || 'false').trim());
 
-const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || crypto.randomBytes(32).toString('hex');
+const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || ((BAKONG_TOKEN || BOT_TOKEN) ? crypto.createHash('sha256').update(`idramaai|${BAKONG_TOKEN}|${BOT_TOKEN}`).digest('hex') : crypto.randomBytes(32).toString('hex'));
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
 const GITHUB_REPO = process.env.GITHUB_REPO || 'lensbykai-bit/iDramame';
@@ -38,7 +38,7 @@ const mediaUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize
 
 if (!BAKONG_TEST_MODE && !BAKONG_ACCOUNT_ID) console.warn('[config] BAKONG_ACCOUNT_ID is missing.');
 if (!BAKONG_TEST_MODE && !BAKONG_TOKEN) console.warn('[config] BAKONG_TOKEN is missing.');
-if (!process.env.ACCESS_TOKEN_SECRET) console.warn('[config] ACCESS_TOKEN_SECRET is missing. Links change after restart.');
+if (!process.env.ACCESS_TOKEN_SECRET) console.warn('[config] ACCESS_TOKEN_SECRET is missing. Using a stable secret derived from configured server credentials.');
 if (!ADMIN_PASSWORD) console.warn('[config] ADMIN_PASSWORD is missing. Web admin disabled.');
 if (!GITHUB_TOKEN) console.warn('[config] GITHUB_TOKEN is missing. Story edits will not persist across redeploys.');
 if (!BOT_TOKEN || !TELEGRAM_STORAGE_CHAT_ID) console.warn('[config] Private media storage is not fully configured.');
@@ -232,11 +232,13 @@ function verifyToken(token) {
   } catch { return null; }
 }
 function createCheckoutProof({ storyId, md5, amount }) {
-  return signToken({ kind: 'checkout', storyId, md5, amount: Number(amount), exp: Date.now() + 370 * 24 * 60 * 60 * 1000 });
+  return signToken({ kind: 'checkout', storyId, md5, amount: Number(amount), exp: Date.now() + 3650 * 24 * 60 * 60 * 1000 });
 }
-function validCheckoutProof(token, storyId, md5, amount) {
+function checkoutProofPayload(token, storyId, md5) {
   const payload = verifyToken(token);
-  return Boolean(payload && payload.kind === 'checkout' && payload.storyId === storyId && payload.md5 === md5 && Number(payload.amount) === Number(amount));
+  if (!payload || payload.kind !== 'checkout' || payload.storyId !== storyId || payload.md5 !== md5) return null;
+  if (!Number.isFinite(Number(payload.amount)) || Number(payload.amount) < 0) return null;
+  return payload;
 }
 function createWatchToken({ storyId, orderId }) {
   return signToken({ kind: 'watch', storyId, orderId, exp: Date.now() + 30 * 24 * 60 * 60 * 1000 });
@@ -307,8 +309,9 @@ app.post('/api/checkout/verify', async (req, res) => {
   const checkoutProof = String(req.body?.checkoutProof || '');
   const story = storyById(storyId);
   if (!story || !md5 || !checkoutProof) return res.status(400).json({ error: 'Checkout data is invalid.' });
-  const amount = Number(story.price_khr || 0);
-  if (!validCheckoutProof(checkoutProof, storyId, md5, amount)) return res.status(401).json({ error: 'Checkout proof is invalid or expired.' });
+  const proof = checkoutProofPayload(checkoutProof, storyId, md5);
+  if (!proof) return res.status(401).json({ error: 'Checkout proof is invalid or expired.' });
+  const amount = Number(proof.amount);
   const order = { id: `DB-${md5.slice(0, 12)}`, storyId, amount };
   try {
     if (BAKONG_TEST_MODE && md5.startsWith('TEST-')) {
