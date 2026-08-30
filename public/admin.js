@@ -12,12 +12,11 @@ function placementOf(s){ return s.placement === 'telegram' ? 'telegram' : 'web';
 
 function updatePlacementUI(){
   const telegram = $('#placement').value === 'telegram';
-  $('#fullMediaLabel').firstChild.textContent = telegram
-    ? 'Full Movie — ជ្រើសរឿងវែងពេញ '
-    : 'Full Video — ជ្រើសវីដេអូពេញ ';
+  $('#fullMediaLabel').hidden = telegram;
+  $('#telegramLargeMovieHelp').hidden = !telegram;
   $('#placementHint').textContent = telegram
-    ? '✈️ Telegram: Cover, Trailer និង Full Movie នឹង Upload ទៅ Telegram។ Bot នឹងបង្ហាញរឿងនេះក្នុង Catalog រឿងវែង។'
-    : '🌐 Web: រឿងខ្លីនឹងបង្ហាញនៅ Website។ Cover, Trailer និង Full Video នឹង Upload ទៅ Telegram សម្រាប់រក្សាទុក។';
+    ? '✈️ Telegram: Upload Cover + Trailer នៅទីនេះ → Save → ទៅ Bot /adminmovies ដើម្បីភ្ជាប់ Full Movie ធំៗ។'
+    : '🌐 Web: Cover, Trailer និង Full Video អាច Upload ពី Admin ហើយរក្សាទុកក្នុង Telegram។';
 }
 
 function mediaReady(s, type){
@@ -97,7 +96,10 @@ function renderStories(){
     const trailerTag = mediaReady(s,'trailer') ? '✅ Trailer ready' : '⚪ No trailer';
     const fullTag = mediaReady(s,'full')
       ? (placement === 'telegram' ? '🎬 Full Movie ready' : '🔐 Full Video ready')
-      : (s.telegram_url ? '🔗 Legacy Telegram link' : '⚠️ No full video');
+      : (placement === 'telegram' ? '📥 Attach via /adminmovies' : '⚠️ No full video');
+    const sizeTag = placement === 'telegram' && s.full_video_size
+      ? `<span>📦 ${(Number(s.full_video_size)/1024/1024).toFixed(1)} MB</span>`
+      : '';
     const coverSrc = s.cover_file_id ? `/api/media/${encodeURIComponent(s.cover_file_id)}` : (s.cover_url || '');
     return `
     <article class="admin-story-card">
@@ -106,7 +108,7 @@ function renderStories(){
         <h3>${esc(s.title)}</h3>
         <div class="muted">${money(s.price_khr)} • ID: ${esc(s.id)}</div>
         <p>${esc(s.preview || '')}</p>
-        <div class="admin-tags"><span>${placeTag}</span><span>${coverTag}</span><span>${trailerTag}</span><span>${fullTag}</span></div>
+        <div class="admin-tags"><span>${placeTag}</span><span>${coverTag}</span><span>${trailerTag}</span><span>${fullTag}</span>${sizeTag}</div>
       </div>
       <div class="admin-card-actions">
         <button class="ghost-btn" data-edit="${esc(s.id)}">កែ</button>
@@ -156,7 +158,7 @@ function editStory(id){
   $('#fullFile').value='';
   setMediaStatus('cover', mediaReady(s,'cover'), mediaReady(s,'cover') ? '✅ Cover មានរួច — ជ្រើស File ថ្មីបើចង់ប្តូរ' : 'មិនទាន់មាន Cover');
   setMediaStatus('trailer', mediaReady(s,'trailer'), mediaReady(s,'trailer') ? '✅ Trailer មានរួច — ជ្រើស File ថ្មីបើចង់ប្តូរ' : 'មិនទាន់មាន Trailer');
-  setMediaStatus('full', mediaReady(s,'full'), mediaReady(s,'full') ? '✅ Full Video មានរួច — ជ្រើស File ថ្មីបើចង់ប្តូរ' : 'មិនទាន់មាន Full Video');
+  setMediaStatus('full', mediaReady(s,'full'), mediaReady(s,'full') ? '✅ Full Video មានរួច' : 'មិនទាន់មាន Full Video');
   $('#formTitle').textContent=`✏️ កែ៖ ${s.title}`;
   $('#cancelEdit').hidden=false;
   updatePlacementUI();
@@ -178,8 +180,11 @@ async function saveStory(e){
     $('#coverFileId').value = coverFileId;
     trailerFileId = await uploadMedia('trailer','trailerFile',trailerFileId);
     $('#trailerFileId').value = trailerFileId;
-    fullFileId = await uploadMedia('full','fullFile',fullFileId);
-    $('#fullFileId').value = fullFileId;
+
+    if(placement === 'web'){
+      fullFileId = await uploadMedia('full','fullFile',fullFileId);
+      $('#fullFileId').value = fullFileId;
+    }
 
     showStatus($('#formStatus'),'⏳ កំពុងរក្សាទុក Story…');
     const body={
@@ -200,13 +205,14 @@ async function saveStory(e){
     const saved = await api('/api/admin/stories',{method:'POST',body:JSON.stringify(body)});
     if(saved.persistedToGitHub === false){
       showStatus($('#formStatus'),'⚠️ Media បាន Upload ទៅ Telegram ហើយ ប៉ុន្តែ Story រក្សាទុកលើ Server ប៉ុណ្ណោះ។ សូមពិនិត្យ GITHUB_TOKEN។','error');
+    }else if(placement === 'telegram' && !fullFileId){
+      showStatus($('#formStatus'),'✅ រក្សាទុករឿងវែងរួច។ ឥឡូវចូល @iDramaAiBot → /adminmovies → ជ្រើសរឿង → ផ្ញើ Full Movie ធំៗ។','success');
     }else{
-      showStatus($('#formStatus'), placement === 'telegram'
-        ? '✅ រឿងវែងបាន Upload ទៅ Telegram + រក្សាទុកជោគជ័យ'
-        : '✅ រឿងខ្លីបាន Upload ទៅ Telegram + រក្សាទុកជោគជ័យ','success');
+      showStatus($('#formStatus'),'✅ Upload + រក្សាទុកជោគជ័យ','success');
     }
+
     const data=await api('/api/admin/stories'); stories=data.stories||[]; renderStories();
-    if(saved.persistedToGitHub !== false) setTimeout(resetForm,900);
+    if(saved.persistedToGitHub !== false) setTimeout(resetForm,1400);
   }catch(err){ showStatus($('#formStatus'),err.message,'error'); }
   if(btn) btn.disabled=false;
 }
