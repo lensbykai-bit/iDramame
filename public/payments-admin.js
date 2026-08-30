@@ -30,20 +30,20 @@ async function adminCall(action, payload = {}) {
     body: JSON.stringify({ action, adminPassword, ...payload })
   });
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data.error || 'Admin payment request failed.');
+  if (!response.ok) throw new Error(data.error || 'មិនអាចភ្ជាប់ប្រព័ន្ធ Payment Admin បាន។');
   return data;
 }
 
 function statusLabel(status) {
-  if (status === 'awaiting_review') return '🕒 Awaiting review';
-  if (status === 'paid') return '✅ Approved';
-  if (status === 'rejected') return '❌ Rejected';
-  return '○ Pending';
+  if (status === 'awaiting_review') return '🕒 រង់ចាំ Admin ពិនិត្យ';
+  if (status === 'paid') return '✅ បានអនុម័ត';
+  if (status === 'rejected') return '❌ បានបដិសេធ';
+  return '○ រង់ចាំការបង់';
 }
 
 function renderOrders(rows) {
   if (!rows.length) {
-    ordersEl.innerHTML = '<div class="pay-card">មិនទាន់មាន KHQR Order ទេ។</div>';
+    ordersEl.innerHTML = '<div class="pay-card empty-note">មិនទាន់មានការបញ្ជាទិញ KHQR ទេ។</div>';
     return;
   }
 
@@ -52,15 +52,15 @@ function renderOrders(rows) {
       <div>
         <strong>${esc(order.title || order.story_id || 'Story')}</strong>
         <div class="muted-small">Order: ${esc(order.id)}</div>
-        <div class="muted-small">${new Date(order.created_at).toLocaleString()}</div>
+        <div class="muted-small">${new Date(order.created_at).toLocaleString('km-KH')}</div>
       </div>
       <div>
-        <div style="font-weight:800">${money(order.amount_khr)}</div>
+        <div style="font-weight:800;font-size:18px">${money(order.amount_khr)}</div>
         <div class="pay-status ${esc(order.status || 'pending')}">${statusLabel(order.status)}</div>
       </div>
       <div class="pay-actions">
-        ${order.status !== 'paid' ? `<button class="admin-btn approve" data-approve="${esc(order.id)}">Approve</button>` : ''}
-        ${order.status !== 'rejected' && order.status !== 'paid' ? `<button class="admin-btn reject" data-reject="${esc(order.id)}">Reject</button>` : ''}
+        ${order.status !== 'paid' ? `<button class="admin-btn approve" data-approve="${esc(order.id)}">អនុម័ត</button>` : ''}
+        ${order.status !== 'rejected' && order.status !== 'paid' ? `<button class="admin-btn reject" data-reject="${esc(order.id)}">បដិសេធ</button>` : ''}
       </div>
     </article>
   `).join('');
@@ -68,7 +68,7 @@ function renderOrders(rows) {
 
 async function loadOrders() {
   refreshBtn.disabled = true;
-  ordersEl.innerHTML = '<div class="pay-card">កំពុងផ្ទុក Orders…</div>';
+  ordersEl.innerHTML = '<div class="pay-card empty-note">កំពុងផ្ទុកការបញ្ជាទិញ…</div>';
   try {
     const data = await adminCall('adminList');
     renderOrders(data.orders || []);
@@ -89,6 +89,7 @@ async function login() {
   adminPassword = passwordInput.value.trim();
   if (!adminPassword) return;
   loginBtn.disabled = true;
+  loginStatus.className = 'status';
   loginStatus.textContent = 'កំពុងពិនិត្យ…';
   try {
     await adminCall('adminList');
@@ -116,7 +117,7 @@ ordersEl.addEventListener('click', async e => {
   const button = approve || reject;
   button.disabled = true;
   const original = button.textContent;
-  button.textContent = '…';
+  button.textContent = 'កំពុងដំណើរការ…';
   try {
     await adminCall(approve ? 'adminApprove' : 'adminReject', { orderId });
     await loadOrders();
