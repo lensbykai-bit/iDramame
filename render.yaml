@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: idrama-me-telegram-bot
+    name: idrama-me-web-store
     runtime: node
     plan: free
     buildCommand: npm install
@@ -9,10 +9,6 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20
-      - key: BOT_TOKEN
-        sync: false
-      - key: ADMIN_TELEGRAM_ID
-        sync: false
       - key: BAKONG_ACCOUNT_ID
         sync: false
       - key: BAKONG_MERCHANT_NAME
@@ -25,9 +21,9 @@ services:
         value: https://api-bakong.nbc.gov.kh
       - key: BAKONG_TOKEN
         sync: false
-      - key: PUBLIC_BASE_URL
-        value: https://idramame.onrender.com
       - key: ACCESS_TOKEN_SECRET
+        sync: false
+      - key: ADMIN_PASSWORD
         sync: false
       - key: GITHUB_TOKEN
         sync: false
