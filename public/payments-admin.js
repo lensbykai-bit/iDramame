@@ -21,7 +21,7 @@ const realKhqrBill = document.getElementById('realKhqrBill');
 let adminPassword = sessionStorage.getItem('idrama_payment_admin_password') || '';
 
 function esc(value = '') {
-  return String(value).replace(/[&<>'"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[c]));
+  return String(value).replace(/[&<>'\"]/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;' }[c]));
 }
 
 function money(value) {
@@ -37,6 +37,28 @@ async function adminCall(action, payload = {}) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || 'មិនអាចភ្ជាប់ប្រព័ន្ធ Payment Admin បាន។');
   return data;
+}
+
+function setQrCardMode(mode, data) {
+  const badge = realKhqrResult?.querySelector('.real-badge');
+  const caption = realKhqrResult?.querySelector('.pay-caption');
+  const validity = realKhqrResult?.querySelector('.qr-info-grid .info-card:nth-child(4) strong');
+  const network = realKhqrResult?.querySelector('.qr-info-grid .info-card:nth-child(3) strong');
+  if (network) network.textContent = 'BAKONG KHQR';
+
+  if (mode === 'direct') {
+    if (badge) badge.textContent = '✓ DIRECT KHQR • KHR';
+    if (caption) caption.textContent = 'ភ្ញៀវបញ្ចូលចំនួនទឹកប្រាក់ក្នុង App';
+    realKhqrAmountText.textContent = 'ទទួលប្រាក់ផ្ទាល់';
+    realKhqrBill.textContent = 'Permanent QR';
+    if (validity) validity.textContent = 'ប្រើបានជាប្រចាំ';
+  } else {
+    if (badge) badge.textContent = '✓ REAL KHQR • KHR';
+    if (caption) caption.textContent = 'ចំនួនទឹកប្រាក់';
+    realKhqrAmountText.textContent = money(data.amount);
+    realKhqrBill.textContent = data.billNumber || '-';
+    if (validity) validity.textContent = '10 នាទី';
+  }
 }
 
 async function generateRealKhqr() {
@@ -65,9 +87,8 @@ async function generateRealKhqr() {
     if (!data.real || !data.qrDataUrl) throw new Error('Server មិនបានត្រឡប់ Real KHQR។');
 
     realKhqrImage.src = data.qrDataUrl;
-    realKhqrAmountText.textContent = money(data.amount);
     realKhqrMerchant.textContent = data.merchantName || 'iDrama.ai';
-    realKhqrBill.textContent = data.billNumber || '-';
+    setQrCardMode('amount', data);
     realKhqrResult.classList.add('open');
     khqrMakerStatus.className = 'maker-status status success';
     khqrMakerStatus.textContent = '✅ KHQR ពិតត្រូវបានបង្កើតរួច។ អាច Scan តាម Bakong/Bank App បាន។';
@@ -79,6 +100,52 @@ async function generateRealKhqr() {
     generateKhqrBtn.disabled = false;
     generateKhqrBtn.textContent = 'បង្កើត KHQR ពិត';
   }
+}
+
+async function generateDirectKhqr() {
+  const btn = document.getElementById('generateDirectKhqrBtn');
+  if (!btn) return;
+  btn.disabled = true;
+  btn.textContent = 'កំពុងបង្កើត…';
+  khqrMakerStatus.className = 'maker-status status';
+  khqrMakerStatus.textContent = '⏳ កំពុងបង្កើត QR ទទួលប្រាក់ផ្ទាល់…';
+  realKhqrResult?.classList.remove('open');
+
+  try {
+    const response = await fetch('/api/admin/khqr/direct', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
+      body: '{}'
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'មិនអាចបង្កើត QR ទទួលប្រាក់ផ្ទាល់បាន។');
+    if (!data.real || !data.directReceive || !data.qrDataUrl) throw new Error('Server មិនបានត្រឡប់ Direct KHQR។');
+
+    realKhqrImage.src = data.qrDataUrl;
+    realKhqrMerchant.textContent = data.merchantName || 'iDrama.ai';
+    setQrCardMode('direct', data);
+    realKhqrResult.classList.add('open');
+    khqrMakerStatus.className = 'maker-status status success';
+    khqrMakerStatus.textContent = '✅ QR ទទួលប្រាក់ផ្ទាល់ត្រូវបានបង្កើតរួច។ ភ្ញៀវ Scan ហើយបញ្ចូលចំនួនទឹកប្រាក់ក្នុង App។';
+    realKhqrResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  } catch (err) {
+    khqrMakerStatus.className = 'maker-status status error';
+    khqrMakerStatus.textContent = err.message;
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'បង្កើត QR ទទួលប្រាក់ផ្ទាល់';
+  }
+}
+
+function installDirectReceiveButton() {
+  const maker = document.querySelector('.khqr-maker');
+  if (!maker || document.getElementById('generateDirectKhqrBtn')) return;
+  const row = document.querySelector('.maker-row');
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'display:flex;gap:10px;flex-wrap:wrap;margin-top:12px';
+  wrap.innerHTML = '<button id="generateDirectKhqrBtn" class="generate-btn" type="button" style="background:linear-gradient(135deg,#8b5cf6,#ec4899);min-width:250px">បង្កើត QR ទទួលប្រាក់ផ្ទាល់</button><span style="align-self:center;opacity:.72;font-size:13px">មិនកំណត់ចំនួនប្រាក់ • មិនផុតកំណត់</span>';
+  row?.insertAdjacentElement('afterend', wrap);
+  document.getElementById('generateDirectKhqrBtn')?.addEventListener('click', generateDirectKhqr);
 }
 
 function statusLabel(status) {
@@ -143,6 +210,7 @@ async function login() {
     sessionStorage.setItem('idrama_payment_admin_password', adminPassword);
     loginBox.hidden = true;
     ordersBox.hidden = false;
+    installDirectReceiveButton();
     await loadOrders();
   } catch (err) {
     loginStatus.className = 'status error';
@@ -180,5 +248,6 @@ ordersEl.addEventListener('click', async e => {
 if (adminPassword) {
   loginBox.hidden = true;
   ordersBox.hidden = false;
+  installDirectReceiveButton();
   loadOrders();
 }
