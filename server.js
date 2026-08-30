@@ -560,9 +560,9 @@ app.post('/api/admin/stories', adminAuth, async (req, res) => {
       preview,
       price_khr: price,
       placement,
-      cover_file_id: placement === 'web' ? coverFileId : '',
-      preview_video_file_id: placement === 'web' ? trailerFileId : '',
-      full_video_file_id: placement === 'web' ? fullFileId : '',
+      cover_file_id: coverFileId,
+      preview_video_file_id: trailerFileId,
+      full_video_file_id: fullFileId,
       cover_url: placement === 'web' ? coverUrl : '',
       preview_video_url: placement === 'web' ? trailerUrl : '',
       full_video_url: placement === 'web' ? fullUrl : '',
@@ -577,9 +577,9 @@ app.post('/api/admin/stories', adminAuth, async (req, res) => {
       preview,
       price_khr: price,
       placement,
-      cover_file_id: placement === 'web' ? coverFileId : '',
-      preview_video_file_id: placement === 'web' ? trailerFileId : '',
-      full_video_file_id: placement === 'web' ? fullFileId : '',
+      cover_file_id: coverFileId,
+      preview_video_file_id: trailerFileId,
+      full_video_file_id: fullFileId,
       cover_url: placement === 'web' ? coverUrl : '',
       preview_video_url: placement === 'web' ? trailerUrl : '',
       full_video_url: placement === 'web' ? fullUrl : '',
@@ -629,7 +629,7 @@ app.get('*', (req, res, next) => {
 
 app.use((err, _req, res, _next) => {
   if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
-    return res.status(413).json({ error: 'File ធំពេកសម្រាប់ Upload តាម Bot។ សូមបន្ថយទំហំ ឬដាក់រឿងវែងក្នុង Telegram។' });
+    return res.status(413).json({ error: 'File ធំពេកសម្រាប់ Upload តាម Bot។ សូមបន្ថយទំហំ ឬ Upload File តូចជាងនេះ។' });
   }
   console.error('[server]', err);
   res.status(500).json({ error: 'Server error.' });
