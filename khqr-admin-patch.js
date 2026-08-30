@@ -1,7 +1,24 @@
 const crypto = require('crypto');
 const express = require('express');
 const QRCode = require('qrcode');
-const { BakongKHQR, khqrData, IndividualInfo } = require('bakong-khqr');
+const khqrSdk = require('bakong-khqr');
+const { BakongKHQR, khqrData } = khqrSdk;
+const OriginalIndividualInfo = khqrSdk.IndividualInfo;
+
+// Compatibility guard for older project code that called IndividualInfo with
+// (accountId, currency, merchantName, merchantCity, optionalData).
+// The current Bakong JS SDK expects:
+// (accountId, merchantName, merchantCity, optionalData).
+function CompatibleIndividualInfo(accountId, arg2, arg3, arg4, arg5) {
+  if (arguments.length >= 5) {
+    const optionalData = { ...(arg5 || {}) };
+    if (optionalData.currency == null && arg2 != null) optionalData.currency = arg2;
+    return new OriginalIndividualInfo(accountId, arg3, arg4, optionalData);
+  }
+  return new OriginalIndividualInfo(accountId, arg2, arg3, arg4 || {});
+}
+CompatibleIndividualInfo.prototype = OriginalIndividualInfo.prototype;
+khqrSdk.IndividualInfo = CompatibleIndividualInfo;
 
 const originalListen = express.application.listen;
 
@@ -36,12 +53,7 @@ function makeRealKhqr(amount) {
   };
   if (mobileNumber) optionalData.mobileNumber = mobileNumber;
 
-  // Bakong SDK signature:
-  // new IndividualInfo(accountId, merchantName, merchantCity, optionalData)
-  // Currency belongs inside optionalData. Passing 116 as the second argument makes
-  // banking apps read "116" as the merchant name.
-  const info = new IndividualInfo(accountId, merchantName, merchantCity, optionalData);
-
+  const info = new OriginalIndividualInfo(accountId, merchantName, merchantCity, optionalData);
   const khqr = new BakongKHQR();
   const response = khqr.generateIndividual(info);
   if (!response || response.status?.code !== 0 || !response.data?.qr || !response.data?.md5) {
