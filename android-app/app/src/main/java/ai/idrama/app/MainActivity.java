@@ -17,7 +17,7 @@ import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 
 public class MainActivity extends Activity {
-    private static final String HOME_URL = "https://idramaai.onrender.com/";
+    private static final String HOME_URL = "https://idramaai.onrender.com/wallet.html";
     private static final int FILE_CHOOSER_REQUEST = 9001;
 
     private WebView webView;
@@ -29,7 +29,7 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
 
         FrameLayout root = new FrameLayout(this);
-        root.setBackgroundColor(Color.rgb(9, 6, 13));
+        root.setBackgroundColor(Color.rgb(255, 247, 251));
 
         webView = new WebView(this);
         FrameLayout.LayoutParams webParams = new FrameLayout.LayoutParams(
