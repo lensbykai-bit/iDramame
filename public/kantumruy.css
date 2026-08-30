@@ -1,12 +1,14 @@
-@import url('https://fonts.googleapis.com/css2?family=Battambang:wght@100;300;400;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Battambang:wght@100;300;400;700;900&family=Noto+Sans+Khmer:wght@400;500;600;700;800&display=swap');
 
 html, body, button, input, textarea, select, option, a, p, span, div, label, strong, h1, h2, h3, h4, h5, h6 {
-  font-family: "Battambang", "Noto Sans Khmer", system-ui, -apple-system, "Segoe UI", sans-serif !important;
+  font-family: "Battambang", "Noto Sans Khmer", "Khmer OS Battambang", "Leelawadee UI", system-ui, -apple-system, "Segoe UI", sans-serif !important;
+  font-feature-settings: normal !important;
+  font-variant-ligatures: normal !important;
+  -webkit-font-smoothing: antialiased;
 }
 
-body {
-  font-feature-settings: "kern" 1;
-  text-rendering: optimizeLegibility;
+html, body {
+  text-rendering: auto;
 }
 
 .hero h1,
@@ -15,12 +17,15 @@ body {
 .admin-login h1,
 .admin-head h1,
 .card-body h3,
-.admin-story-copy h3 {
-  line-height: 1.5;
+.admin-story-copy h3,
+.pay-admin h1,
+.pay-admin h2,
+.pay-admin h3 {
+  line-height: 1.55;
   letter-spacing: 0 !important;
 }
 
 input::placeholder,
 textarea::placeholder {
-  font-family: "Battambang", "Noto Sans Khmer", system-ui, sans-serif !important;
+  font-family: "Battambang", "Noto Sans Khmer", "Khmer OS Battambang", "Leelawadee UI", system-ui, sans-serif !important;
 }
