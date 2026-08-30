@@ -2,12 +2,13 @@ const $ = (q, root=document) => root.querySelector(q);
 const SESSION_KEY = 'iDramaAiAdminPassword';
 let password = sessionStorage.getItem(SESSION_KEY) || '';
 let stories = [];
+let meta = { checkout:false, testMode:false, mediaUploads:false, accountLibrary:false };
 
 function esc(v=''){ return String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
 function money(v){ return `${Number(v || 0).toLocaleString('en-US')}៛`; }
 function headers(){ return {'Content-Type':'application/json','x-admin-password':password}; }
-function showStatus(el, text, type=''){ el.hidden=false; el.className=`status ${type}`; el.textContent=text; }
-function hideStatus(el){ el.hidden=true; }
+function showStatus(el, text, type=''){ if(!el) return; el.hidden=false; el.className=`status ${type}`; el.textContent=text; }
+function hideStatus(el){ if(el) el.hidden=true; }
 
 function mediaReady(s, type){
   if(type === 'cover') return Boolean(s.cover_file_id || s.cover_url);
@@ -19,13 +20,46 @@ function setMediaStatus(type, ready, text=''){
   const el = $(`#${type}Status`);
   if(!el) return;
   el.textContent = text || (ready ? '✅ មាន File រួច' : 'មិនទាន់ជ្រើស File');
+  el.classList.toggle('ready', Boolean(ready));
 }
 
 async function api(url, options={}){
-  const res = await fetch(url, {...options, headers:{...headers(), ...(options.headers||{})}});
+  const res = await fetch(url, {...options, headers:{...headers(), ...(options.headers||{})}, cache:'no-store'});
   const data = await res.json().catch(()=>({}));
   if(!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
   return data;
+}
+
+async function loadMeta(){
+  try{
+    const res = await fetch('/api/meta', {cache:'no-store'});
+    const data = await res.json();
+    if(res.ok) meta = {...meta, ...data};
+  }catch{}
+  renderSystemStatus();
+}
+
+function renderSystemStatus(){
+  const fullReady = stories.filter(s=>mediaReady(s,'full')).length;
+  if($('#statStories')) $('#statStories').textContent = String(stories.length);
+  if($('#statFull')) $('#statFull').textContent = String(fullReady);
+
+  const bakongReady = Boolean(meta.checkout);
+  const mediaReadyState = Boolean(meta.mediaUploads);
+  const libraryReady = meta.accountLibrary !== false;
+
+  if($('#statBakong')) $('#statBakong').textContent = bakongReady ? 'READY' : 'NOT READY';
+  if($('#statMedia')) $('#statMedia').textContent = mediaReadyState ? 'READY' : 'NOT READY';
+  if($('#bakongStatus')) $('#bakongStatus').textContent = bakongReady ? '✅ Ready' : '⚠️ Not configured';
+  if($('#paymentMode')) $('#paymentMode').textContent = meta.testMode ? '🧪 Test Mode' : (bakongReady ? '💳 Real Payment' : '—');
+  if($('#mediaStatus')) $('#mediaStatus').textContent = mediaReadyState ? '✅ Ready' : '⚠️ Not configured';
+  if($('#libraryStatus')) $('#libraryStatus').textContent = libraryReady ? '✅ Ready' : '⚠️ Not ready';
+
+  const ok = bakongReady && libraryReady;
+  if($('#systemOverall')){
+    $('#systemOverall').textContent = ok ? '✅ Core System Ready' : '⚠️ Setup Required';
+    $('#systemOverall').classList.toggle('ready', ok);
+  }
 }
 
 async function uploadMedia(kind, inputId, existingFileId){
@@ -61,6 +95,7 @@ async function login(){
     stories = data.stories || [];
     $('#loginPanel').hidden = true;
     $('#dashboard').hidden = false;
+    await loadMeta();
     renderStories();
   }catch(err){
     showStatus($('#loginStatus'), err.message, 'error');
@@ -74,6 +109,7 @@ async function loadDashboard(){
     stories = data.stories || [];
     $('#loginPanel').hidden = true;
     $('#dashboard').hidden = false;
+    await loadMeta();
     renderStories();
   }catch{
     sessionStorage.removeItem(SESSION_KEY);
@@ -81,35 +117,40 @@ async function loadDashboard(){
   }
 }
 
-function renderStories(){
-  $('#adminCount').textContent = `${stories.length} រឿង`;
+function filteredStories(){
+  const q = String($('#adminSearch')?.value || '').trim().toLowerCase();
+  return q ? stories.filter(s=>`${s.title} ${s.preview || ''} ${s.id}`.toLowerCase().includes(q)) : stories;
+}
 
-  $('#adminStories').innerHTML = stories.length ? stories.map(s=>{
-    const coverTag = mediaReady(s,'cover') ? '🖼️ Cover ready' : '⚪ No cover';
-    const trailerTag = mediaReady(s,'trailer') ? '✅ Trailer ready' : '⚪ No trailer';
-    const fullTag = mediaReady(s,'full') ? '🔐 Full Movie ready' : '⚠️ No Full Movie';
+function renderStories(){
+  const visible = filteredStories();
+  $('#adminCount').textContent = `${visible.length}/${stories.length} រឿង`;
+  renderSystemStatus();
+
+  $('#adminStories').innerHTML = visible.length ? visible.map(s=>{
+    const coverTag = mediaReady(s,'cover') ? '🖼️ Cover' : '⚪ No Cover';
+    const trailerTag = mediaReady(s,'trailer') ? '🎞️ Trailer' : '⚪ No Trailer';
+    const fullTag = mediaReady(s,'full') ? '🔐 Full Ready' : '⚠️ No Full Movie';
     const coverSrc = s.cover_file_id ? `/api/media/${encodeURIComponent(s.cover_file_id)}` : (s.cover_url || '');
+    const readiness = mediaReady(s,'full') ? 'ready' : 'incomplete';
 
     return `
-    <article class="admin-story-card">
-      <div class="admin-thumb">${coverSrc ? `<img src="${esc(coverSrc)}" alt="">` : '<span>AI</span>'}</div>
+    <article class="admin-story-card ${readiness}">
+      <div class="admin-thumb">${coverSrc ? `<img src="${esc(coverSrc)}" alt="${esc(s.title)}">` : '<span>iD</span>'}</div>
       <div class="admin-story-copy">
-        <h3>${esc(s.title)}</h3>
+        <div class="story-title-line"><h3>${esc(s.title)}</h3><span class="story-ready-badge ${readiness}">${mediaReady(s,'full') ? 'READY TO SELL' : 'INCOMPLETE'}</span></div>
         <div class="muted">${money(s.price_khr)} • ID: ${esc(s.id)}</div>
         <p>${esc(s.preview || '')}</p>
         <div class="admin-tags">
-          <span>🌐 Website</span>
-          <span>${coverTag}</span>
-          <span>${trailerTag}</span>
-          <span>${fullTag}</span>
+          <span>${coverTag}</span><span>${trailerTag}</span><span>${fullTag}</span>
         </div>
       </div>
       <div class="admin-card-actions">
-        <button class="ghost-btn" data-edit="${esc(s.id)}">កែ</button>
-        <button class="danger-btn" data-delete="${esc(s.id)}">លុប</button>
+        <button class="ghost-btn" data-edit="${esc(s.id)}">✏️ កែ</button>
+        <button class="danger-btn" data-delete="${esc(s.id)}">🗑️ លុប</button>
       </div>
     </article>`;
-  }).join('') : '<div class="loading">មិនទាន់មានរឿងទេ។</div>';
+  }).join('') : '<div class="loading">រកមិនឃើញរឿងទេ។</div>';
 }
 
 function resetForm(){
@@ -154,12 +195,12 @@ function editStory(id){
 
   $('#formTitle').textContent=`✏️ កែ៖ ${s.title}`;
   $('#cancelEdit').hidden=false;
-  window.scrollTo({top:0,behavior:'smooth'});
+  document.querySelector('.story-editor-panel')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 async function saveStory(e){
   e.preventDefault();
-  const btn=e.submitter;
+  const btn=e.submitter || $('#saveBtn');
   if(btn) btn.disabled=true;
   showStatus($('#formStatus'),'⏳ កំពុង Upload និងរក្សាទុក…');
 
@@ -170,10 +211,8 @@ async function saveStory(e){
 
     coverFileId = await uploadMedia('cover','coverFile',coverFileId);
     $('#coverFileId').value = coverFileId;
-
     trailerFileId = await uploadMedia('trailer','trailerFile',trailerFileId);
     $('#trailerFileId').value = trailerFileId;
-
     fullFileId = await uploadMedia('full','fullFile',fullFileId);
     $('#fullFileId').value = fullFileId;
 
@@ -192,30 +231,18 @@ async function saveStory(e){
       telegram_url: ''
     };
 
-    const saved = await api('/api/admin/stories',{
-      method:'POST',
-      body:JSON.stringify(body)
-    });
+    const saved = await api('/api/admin/stories',{method:'POST',body:JSON.stringify(body)});
 
     if(saved.persistedToGitHub === false){
-      showStatus(
-        $('#formStatus'),
-        '⚠️ Media បាន Upload រួច ប៉ុន្តែ Story រក្សាទុកលើ Server ប៉ុណ្ណោះ។ សូមពិនិត្យ GITHUB_TOKEN។',
-        'error'
-      );
+      showStatus($('#formStatus'),'⚠️ Media បាន Upload រួច ប៉ុន្តែ Story រក្សាទុកលើ Server ប៉ុណ្ណោះ។ សូមពិនិត្យ GITHUB_TOKEN។','error');
     }else{
-      showStatus(
-        $('#formStatus'),
-        '✅ រក្សាទុកជោគជ័យ — រឿងនេះបង្ហាញនៅ Website ហើយ Full Movie ត្រូវបង់ Bakong មុនមើល។',
-        'success'
-      );
+      showStatus($('#formStatus'),'✅ រក្សាទុកជោគជ័យ — Story បានបង្ហាញនៅ Website Store។','success');
     }
 
     const data=await api('/api/admin/stories');
     stories=data.stories||[];
     renderStories();
-
-    if(saved.persistedToGitHub !== false) setTimeout(resetForm,1400);
+    if(saved.persistedToGitHub !== false) setTimeout(resetForm,1100);
   }catch(err){
     showStatus($('#formStatus'),err.message,'error');
   }
@@ -232,40 +259,38 @@ async function deleteStory(id){
     const deleted = await api(`/api/admin/stories/${encodeURIComponent(id)}`,{method:'DELETE'});
     stories=stories.filter(x=>x.id!==id);
     renderStories();
-    if(deleted.persistedToGitHub === false){
-      alert('រឿងត្រូវបានលុបលើ Server ប៉ុណ្ណោះ។ សូមពិនិត្យ GITHUB_TOKEN។');
-    }
-  }catch(err){
-    alert(err.message);
-  }
+    if(deleted.persistedToGitHub === false) alert('រឿងត្រូវបានលុបលើ Server ប៉ុណ្ណោះ។ សូមពិនិត្យ GITHUB_TOKEN។');
+  }catch(err){ alert(err.message); }
+}
+
+async function refreshDashboard(){
+  const btn = $('#refreshBtn');
+  if(btn) btn.disabled = true;
+  try{
+    const data = await api('/api/admin/stories');
+    stories = data.stories || [];
+    await loadMeta();
+    renderStories();
+  }catch(err){ alert(err.message); }
+  if(btn) btn.disabled = false;
 }
 
 $('#loginBtn').addEventListener('click', login);
 $('#password').addEventListener('keydown', e=>{ if(e.key==='Enter') login(); });
 $('#logoutBtn').addEventListener('click',()=>{ sessionStorage.removeItem(SESSION_KEY); location.reload(); });
+$('#refreshBtn')?.addEventListener('click',refreshDashboard);
 $('#storyForm').addEventListener('submit', saveStory);
 $('#cancelEdit').addEventListener('click', resetForm);
+$('#clearBtn')?.addEventListener('click', resetForm);
+$('#adminSearch')?.addEventListener('input', renderStories);
 
-$('#coverFile').addEventListener('change',()=>setMediaStatus(
-  'cover',
-  Boolean($('#coverFile').files[0]),
-  $('#coverFile').files[0] ? `📎 ${$('#coverFile').files[0].name}` : 'មិនទាន់ជ្រើសរូប'
-));
-$('#trailerFile').addEventListener('change',()=>setMediaStatus(
-  'trailer',
-  Boolean($('#trailerFile').files[0]),
-  $('#trailerFile').files[0] ? `📎 ${$('#trailerFile').files[0].name}` : 'មិនទាន់ជ្រើសវីដេអូ'
-));
-$('#fullFile').addEventListener('change',()=>setMediaStatus(
-  'full',
-  Boolean($('#fullFile').files[0]),
-  $('#fullFile').files[0] ? `📎 ${$('#fullFile').files[0].name}` : 'មិនទាន់ជ្រើស Full Movie'
-));
+$('#coverFile').addEventListener('change',()=>setMediaStatus('cover',Boolean($('#coverFile').files[0]),$('#coverFile').files[0] ? `📎 ${$('#coverFile').files[0].name}` : 'មិនទាន់ជ្រើសរូប'));
+$('#trailerFile').addEventListener('change',()=>setMediaStatus('trailer',Boolean($('#trailerFile').files[0]),$('#trailerFile').files[0] ? `📎 ${$('#trailerFile').files[0].name}` : 'មិនទាន់ជ្រើសវីដេអូ'));
+$('#fullFile').addEventListener('change',()=>setMediaStatus('full',Boolean($('#fullFile').files[0]),$('#fullFile').files[0] ? `📎 ${$('#fullFile').files[0].name}` : 'មិនទាន់ជ្រើស Full Movie'));
 
 $('#adminStories').addEventListener('click',e=>{
   const edit=e.target.closest('[data-edit]');
   if(edit) editStory(edit.dataset.edit);
-
   const del=e.target.closest('[data-delete]');
   if(del) deleteStory(del.dataset.delete);
 });
