@@ -90,8 +90,8 @@ async function showPublishList(ctx) {
   const stories = loadStories();
   if (!stories.length) return ctx.reply('មិនទាន់មានរឿងនៅ Website Store ទេ។ សូមបន្ថែមរឿងក្នុង /admin.html ជាមុន។');
 
-  const rows = stories.slice(0, 50).map((story) => [
-    Markup.button.callback(`📢 ${story.title} • ${moneyKHR(story.price_khr)}`, `publish:${story.id}`)
+  const rows = stories.slice(0, 50).map((story, index) => [
+    Markup.button.callback(`📢 ${story.title} • ${moneyKHR(story.price_khr)}`, `publish:${index}`)
   ]);
 
   return ctx.reply(
@@ -149,12 +149,12 @@ function startTelegramBot() {
     );
   });
 
-  bot.action(/^publish:(.+)$/, async (ctx) => {
+  bot.action(/^publish:(\d+)$/, async (ctx) => {
     if (!isAdmin(ctx)) return ctx.answerCbQuery('Admin only', { show_alert: true });
 
-    const storyId = ctx.match[1];
-    const story = loadStories().find((item) => item.id === storyId);
-    if (!story) return ctx.answerCbQuery('រកមិនឃើញរឿងនេះទេ។', { show_alert: true });
+    const index = Number(ctx.match[1]);
+    const story = loadStories()[index];
+    if (!story) return ctx.answerCbQuery('រកមិនឃើញរឿងនេះទេ។ សូមវាយ /postmovie ម្តងទៀត។', { show_alert: true });
 
     try {
       await ctx.answerCbQuery('កំពុង Post…');
