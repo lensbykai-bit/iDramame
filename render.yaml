@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: idrama-ai
+    name: idramaai
     runtime: node
     plan: free
     buildCommand: npm install
@@ -13,8 +13,10 @@ services:
         value: iDramaAi
       - key: BOT_TOKEN
         sync: false
+      - key: TELEGRAM_BOT_USERNAME
+        value: iDramaAiBot
       - key: PUBLIC_BASE_URL
-        value: https://idramame.onrender.com
+        value: https://idramaai.onrender.com
       - key: BAKONG_ACCOUNT_ID
         sync: false
       - key: BAKONG_MERCHANT_NAME
