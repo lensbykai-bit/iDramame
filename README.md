@@ -19,13 +19,13 @@ Telegram / Website → មើល Trailer → ទិញតាម Bakong KHQR ន�
 - Telegram Bot `/start`, `/catalog`, `/help`
 - Telegram Bot កំណត់ Display Name/Description ទៅ `iDramaAi` ដោយស្វ័យប្រវត្តិពេល Server ចាប់ផ្តើម
 
-## URLs
+## Production targets
 
-- Website: `https://idramame.onrender.com`
-- Admin: `https://idramame.onrender.com/admin.html`
-- Telegram username បច្ចុប្បន្ន: `@iDrama_Me_Bot`
+- Website target: `https://idramaai.onrender.com`
+- Admin target: `https://idramaai.onrender.com/admin.html`
+- Telegram target: `@iDramaAiBot`
 
-URL និង Telegram username ខាងលើជាឈ្មោះបច្ចេកទេសបច្ចុប្បន្ន។ Brand ដែលអ្នកមើលឃើញក្នុង Website និង Bot គឺ `iDramaAi`។
+`render.yaml` ត្រូវបានរៀបចំឲ្យ Service name = `idramaai`។ URL ពិតអាស្រ័យលើការទំនេររបស់ Render នៅពេលបង្កើត Service។ Telegram username ក៏អាស្រ័យលើការទំនេរនៅ BotFather។
 
 ## Render Environment Variables
 
@@ -34,7 +34,8 @@ URL និង Telegram username ខាងលើជាឈ្មោះបច្ច
 ```env
 BRAND_NAME=iDramaAi
 BOT_TOKEN=
-PUBLIC_BASE_URL=https://idramame.onrender.com
+TELEGRAM_BOT_USERNAME=iDramaAiBot
+PUBLIC_BASE_URL=https://idramaai.onrender.com
 
 BAKONG_ACCOUNT_ID=
 BAKONG_MERCHANT_NAME=iDramaAi
