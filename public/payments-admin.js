@@ -9,6 +9,14 @@ const loginBtn = document.getElementById('loginBtn');
 const loginStatus = document.getElementById('loginStatus');
 const refreshBtn = document.getElementById('refreshBtn');
 const ordersEl = document.getElementById('orders');
+const realKhqrAmount = document.getElementById('realKhqrAmount');
+const generateKhqrBtn = document.getElementById('generateKhqrBtn');
+const khqrMakerStatus = document.getElementById('khqrMakerStatus');
+const realKhqrResult = document.getElementById('realKhqrResult');
+const realKhqrImage = document.getElementById('realKhqrImage');
+const realKhqrAmountText = document.getElementById('realKhqrAmountText');
+const realKhqrMerchant = document.getElementById('realKhqrMerchant');
+const realKhqrBill = document.getElementById('realKhqrBill');
 
 let adminPassword = sessionStorage.getItem('idrama_payment_admin_password') || '';
 
@@ -32,6 +40,50 @@ async function adminCall(action, payload = {}) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(data.error || 'មិនអាចភ្ជាប់ប្រព័ន្ធ Payment Admin បាន។');
   return data;
+}
+
+async function generateRealKhqr() {
+  const amount = Number(realKhqrAmount?.value || 0);
+  if (!Number.isInteger(amount) || amount < 100) {
+    khqrMakerStatus.className = 'maker-status status error';
+    khqrMakerStatus.textContent = 'សូមបញ្ចូលចំនួនទឹកប្រាក់ចាប់ពី 100៛ ឡើងទៅ។';
+    realKhqrResult?.classList.remove('open');
+    return;
+  }
+
+  generateKhqrBtn.disabled = true;
+  generateKhqrBtn.textContent = 'កំពុងបង្កើត KHQR…';
+  khqrMakerStatus.className = 'maker-status status';
+  khqrMakerStatus.textContent = '⏳ កំពុងបង្កើត Bakong KHQR ពិត…';
+  realKhqrResult?.classList.remove('open');
+
+  try {
+    const response = await fetch('/api/admin/khqr/generate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-password': adminPassword
+      },
+      body: JSON.stringify({ amount })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.error || 'មិនអាចបង្កើត KHQR ពិតបាន។');
+    if (!data.real || !data.qrDataUrl) throw new Error('Server មិនបានត្រឡប់ Real KHQR។');
+
+    realKhqrImage.src = data.qrDataUrl;
+    realKhqrAmountText.textContent = money(data.amount);
+    realKhqrMerchant.textContent = `អ្នកទទួល: ${data.merchantName || 'iDrama.ai'}`;
+    realKhqrBill.textContent = `Bill: ${data.billNumber || '-'}`;
+    realKhqrResult.classList.add('open');
+    khqrMakerStatus.className = 'maker-status status success';
+    khqrMakerStatus.textContent = '✅ KHQR ពិតត្រូវបានបង្កើតរួច។ សូមសាក Scan ក្នុង Bakong/Bank App មុនទទួលប្រាក់ពិត។';
+  } catch (err) {
+    khqrMakerStatus.className = 'maker-status status error';
+    khqrMakerStatus.textContent = err.message;
+  } finally {
+    generateKhqrBtn.disabled = false;
+    generateKhqrBtn.textContent = 'បង្កើត KHQR ពិត';
+  }
 }
 
 function statusLabel(status) {
@@ -108,6 +160,8 @@ async function login() {
 loginBtn.addEventListener('click', login);
 passwordInput.addEventListener('keydown', e => { if (e.key === 'Enter') login(); });
 refreshBtn.addEventListener('click', loadOrders);
+generateKhqrBtn?.addEventListener('click', generateRealKhqr);
+realKhqrAmount?.addEventListener('keydown', e => { if (e.key === 'Enter') generateRealKhqr(); });
 
 ordersEl.addEventListener('click', async e => {
   const approve = e.target.closest('[data-approve]');
