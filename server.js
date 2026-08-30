@@ -8,12 +8,12 @@ const express = require('express');
 const QRCode = require('qrcode');
 const { BakongKHQR, khqrData, IndividualInfo } = require('bakong-khqr');
 
-const BRAND_NAME = process.env.BRAND_NAME || 'ខ្ញុំចង់មើលរឿងអេអាយ';
+const BRAND_NAME = process.env.BRAND_NAME || 'iDramaAi';
 const BAKONG_ACCOUNT_ID = process.env.BAKONG_ACCOUNT_ID || '';
-const BAKONG_MERCHANT_NAME = process.env.BAKONG_MERCHANT_NAME || 'AI STORY KH';
+const BAKONG_MERCHANT_NAME = process.env.BAKONG_MERCHANT_NAME || 'iDramaAi';
 const BAKONG_MERCHANT_CITY = process.env.BAKONG_MERCHANT_CITY || 'PHNOM PENH';
 const BAKONG_MOBILE_NUMBER = process.env.BAKONG_MOBILE_NUMBER || '';
-const BAKONG_STORE_LABEL = process.env.BAKONG_STORE_LABEL || 'AI STORY KH';
+const BAKONG_STORE_LABEL = process.env.BAKONG_STORE_LABEL || 'iDramaAi';
 const BAKONG_API_BASE_URL = (process.env.BAKONG_API_BASE_URL || 'https://api-bakong.nbc.gov.kh').replace(/\/$/, '');
 const BAKONG_TOKEN = process.env.BAKONG_TOKEN || '';
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || crypto.randomBytes(32).toString('hex');
@@ -46,6 +46,14 @@ function saveStoriesLocal(stories) {
   fs.writeFileSync(storiesPath, JSON.stringify(stories, null, 2) + '\n');
 }
 
+function placementOf(story) {
+  return story?.placement === 'telegram' ? 'telegram' : 'web';
+}
+
+function webStories() {
+  return loadStories().filter((story) => placementOf(story) === 'web');
+}
+
 function storyById(id) {
   return loadStories().find((story) => story.id === id);
 }
@@ -56,6 +64,7 @@ function publicStory(story) {
     title: story.title,
     preview: story.preview || '',
     price_khr: Number(story.price_khr || 0),
+    placement: placementOf(story),
     cover_url: story.cover_url || '',
     preview_video_url: story.preview_video_url || ''
   };
@@ -123,7 +132,7 @@ async function persistStories(stories, message) {
     Authorization: `Bearer ${GITHUB_TOKEN}`,
     Accept: 'application/vnd.github+json',
     'X-GitHub-Api-Version': '2022-11-28',
-    'User-Agent': 'ai-story-kh-web-admin'
+    'User-Agent': 'idramaai-web-admin'
   };
 
   const current = await fetch(`${api}?ref=${encodeURIComponent(GITHUB_BRANCH)}`, { headers });
@@ -259,12 +268,12 @@ app.get('/api/meta', (_req, res) => {
 });
 
 app.get('/api/stories', (_req, res) => {
-  res.json({ stories: loadStories().map(publicStory) });
+  res.json({ stories: webStories().map(publicStory) });
 });
 
 app.get('/api/stories/:id', (req, res) => {
   const story = storyById(req.params.id);
-  if (!story) return res.status(404).json({ error: 'Story not found' });
+  if (!story || placementOf(story) !== 'web') return res.status(404).json({ error: 'Story not found' });
   res.json({ story: publicStory(story) });
 });
 
@@ -274,7 +283,7 @@ app.post('/api/orders', async (req, res) => {
   }
 
   const story = storyById(String(req.body?.storyId || ''));
-  if (!story) return res.status(404).json({ error: 'Story not found' });
+  if (!story || placementOf(story) !== 'web') return res.status(404).json({ error: 'Story not found' });
   if (!story.full_video_url) return res.status(409).json({ error: 'រឿងនេះមិនទាន់មានវីដេអូពេញសម្រាប់ទិញទេ។' });
 
   const order = {
@@ -409,14 +418,19 @@ app.post('/api/admin/stories', adminAuth, async (req, res) => {
   const title = String(input.title || '').trim();
   const preview = String(input.preview || '').trim();
   const price = Number(input.price_khr);
+  const placement = String(input.placement || 'web').trim() === 'telegram' ? 'telegram' : 'web';
   const coverUrl = String(input.cover_url || '').trim();
   const trailerUrl = String(input.preview_video_url || '').trim();
   const fullUrl = String(input.full_video_url || '').trim();
+  const telegramUrl = String(input.telegram_url || '').trim();
 
   if (!title) return res.status(400).json({ error: 'Title is required.' });
   if (!Number.isFinite(price) || price < 0) return res.status(400).json({ error: 'Price is invalid.' });
-  if (![coverUrl, trailerUrl, fullUrl].every(validHttpUrl)) {
-    return res.status(400).json({ error: 'Cover/Video URLs must use http or https.' });
+  if (![coverUrl, trailerUrl, fullUrl, telegramUrl].every(validHttpUrl)) {
+    return res.status(400).json({ error: 'Cover/Video/Telegram URLs must use http or https.' });
+  }
+  if (placement === 'telegram' && telegramUrl && !/^https?:\/\/(t\.me|telegram\.me)\//i.test(telegramUrl)) {
+    return res.status(400).json({ error: 'Telegram link must use t.me or telegram.me.' });
   }
 
   const stories = loadStories();
@@ -430,9 +444,11 @@ app.post('/api/admin/stories', adminAuth, async (req, res) => {
       title,
       preview,
       price_khr: price,
+      placement,
       cover_url: coverUrl,
       preview_video_url: trailerUrl,
-      full_video_url: fullUrl,
+      full_video_url: placement === 'web' ? fullUrl : '',
+      telegram_url: placement === 'telegram' ? telegramUrl : '',
       updated_at: new Date().toISOString()
     };
     stories[index] = story;
@@ -442,16 +458,18 @@ app.post('/api/admin/stories', adminAuth, async (req, res) => {
       title,
       preview,
       price_khr: price,
+      placement,
       cover_url: coverUrl,
       preview_video_url: trailerUrl,
-      full_video_url: fullUrl,
+      full_video_url: placement === 'web' ? fullUrl : '',
+      telegram_url: placement === 'telegram' ? telegramUrl : '',
       created_at: new Date().toISOString()
     };
     stories.unshift(story);
   }
 
   try {
-    const result = await persistStories(stories, `${id ? 'Update' : 'Add'} story: ${title}`);
+    const result = await persistStories(stories, `${id ? 'Update' : 'Add'} ${placement} story: ${title}`);
     res.json({ ok: true, story, ...result });
   } catch (error) {
     console.error('[admin-save]', error.message);
@@ -475,7 +493,7 @@ app.delete('/api/admin/stories/:id', adminAuth, async (req, res) => {
 });
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'ai-story-kh', brand: BRAND_NAME });
+  res.json({ ok: true, service: 'idramaai', brand: BRAND_NAME });
 });
 
 app.get('*', (req, res, next) => {
