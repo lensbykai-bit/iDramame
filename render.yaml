@@ -9,11 +9,31 @@ services:
     envVars:
       - key: NODE_VERSION
         value: 20
+      - key: BRAND_NAME
+        value: iDramaAi
+      - key: PUBLIC_BASE_URL
+        value: https://idramaai.onrender.com
       - key: BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_BOT_USERNAME
+        value: iDramaAi_bot
+      - key: TELEGRAM_CHANNEL_ID
+        sync: false
+      - key: TELEGRAM_CHANNEL_URL
+        sync: false
+      - key: ADMIN_TELEGRAM_ID
         sync: false
       - key: TELEGRAM_STORAGE_CHAT_ID
         sync: false
       - key: BAKONG_ACCOUNT_ID
+        sync: false
+      - key: BAKONG_MERCHANT_NAME
+        value: iDramaAi
+      - key: BAKONG_STORE_LABEL
+        value: iDramaAi
+      - key: BAKONG_MERCHANT_CITY
+        value: PHNOM PENH
+      - key: BAKONG_MOBILE_NUMBER
         sync: false
       - key: BAKONG_TOKEN
         sync: false
@@ -25,3 +45,7 @@ services:
         sync: false
       - key: GITHUB_TOKEN
         sync: false
+      - key: GITHUB_REPO
+        value: lensbykai-bit/iDramame
+      - key: GITHUB_BRANCH
+        value: main
