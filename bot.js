@@ -182,11 +182,19 @@ async function saveAdminStory(draft) {
   };
 
   stories.unshift(story);
-  saveStoriesLocal(stories);
-  const persistence = await persistStoriesToGitHub(
-    stories,
-    `Add story: ${story.title}`
-  );
+
+  let persistence;
+  if (GITHUB_TOKEN) {
+    persistence = await persistStoriesToGitHub(
+      stories,
+      `Add story: ${story.title}`
+    );
+    saveStoriesLocal(stories);
+  } else {
+    saveStoriesLocal(stories);
+    persistence = { permanent: false, reason: 'GITHUB_TOKEN is not configured' };
+  }
+
   return { story, persistence };
 }
 
