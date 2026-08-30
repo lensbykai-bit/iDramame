@@ -25,3 +25,7 @@ services:
         value: https://api-bakong.nbc.gov.kh
       - key: BAKONG_TOKEN
         sync: false
+      - key: PUBLIC_BASE_URL
+        value: https://idramame.onrender.com
+      - key: ACCESS_TOKEN_SECRET
+        sync: false
