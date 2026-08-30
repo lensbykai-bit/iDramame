@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { Telegraf, Markup } = require('telegraf');
 
-const BRAND_NAME = process.env.BRAND_NAME || 'iDramaAi';
+const BRAND_NAME = 'iDramaAi';
 const BOT_TOKEN = process.env.BOT_TOKEN || '';
 const TELEGRAM_BOT_USERNAME = process.env.TELEGRAM_BOT_USERNAME || 'iDramaAiBot';
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || 'https://idramaai.onrender.com').replace(/\/$/, '');
@@ -50,6 +50,34 @@ async function showCatalog(ctx) {
   );
 }
 
+async function syncBotProfile(bot) {
+  const description = `${BRAND_NAME} — មើល Trailer រឿងអេអាយ និងចូល Website សម្រាប់ទិញរឿងពេញ។`;
+  const shortDescription = `${BRAND_NAME} | AI Short Drama`;
+  const languages = [undefined, 'en', 'km'];
+
+  const tasks = [];
+  for (const languageCode of languages) {
+    const lang = languageCode ? { language_code: languageCode } : {};
+    tasks.push(bot.telegram.callApi('setMyName', { name: BRAND_NAME, ...lang }));
+    tasks.push(bot.telegram.callApi('setMyDescription', { description, ...lang }));
+    tasks.push(bot.telegram.callApi('setMyShortDescription', { short_description: shortDescription, ...lang }));
+  }
+
+  tasks.push(bot.telegram.setMyCommands([
+    { command: 'start', description: 'ចាប់ផ្តើម' },
+    { command: 'catalog', description: 'មើលរឿងទាំងអស់' },
+    { command: 'help', description: 'របៀបប្រើ' }
+  ]));
+
+  const results = await Promise.allSettled(tasks);
+  const failed = results.filter((result) => result.status === 'rejected');
+  if (failed.length) {
+    console.error('[telegram-profile]', failed.map((item) => item.reason?.message || String(item.reason)).join(' | '));
+  } else {
+    console.log(`[telegram-profile] synced as ${BRAND_NAME}`);
+  }
+}
+
 function startTelegram() {
   if (!BOT_TOKEN) {
     console.warn('[telegram] BOT_TOKEN is missing. Telegram bot is disabled; web store still runs.');
@@ -59,6 +87,7 @@ function startTelegram() {
   const bot = new Telegraf(BOT_TOKEN);
 
   bot.start(async (ctx) => {
+    await syncBotProfile(bot);
     await ctx.reply(
       `🎬 <b>សូមស្វាគមន៍មកកាន់ ${BRAND_NAME}</b>\n\nមើលរឿងខ្លីៗ និង Trailer តាម Telegram ហើយចូល Website សម្រាប់ Bakong KHQR និង Watch Page រឿងពេញ។`,
       { parse_mode: 'HTML', ...mainMenu() }
@@ -85,20 +114,7 @@ function startTelegram() {
 
   bot.catch((err) => console.error('[telegram]', err));
 
-  Promise.all([
-    bot.telegram.callApi('setMyName', { name: BRAND_NAME }),
-    bot.telegram.callApi('setMyDescription', {
-      description: `${BRAND_NAME} — មើល Trailer រឿងអេអាយ និងចូល Website សម្រាប់ទិញរឿងពេញ។`
-    }),
-    bot.telegram.callApi('setMyShortDescription', {
-      short_description: `${BRAND_NAME} | AI Short Drama`
-    }),
-    bot.telegram.setMyCommands([
-      { command: 'start', description: 'ចាប់ផ្តើម' },
-      { command: 'catalog', description: 'មើលរឿងទាំងអស់' },
-      { command: 'help', description: 'របៀបប្រើ' }
-    ])
-  ]).catch((err) => console.error('[telegram-profile]', err.message));
+  syncBotProfile(bot).catch((err) => console.error('[telegram-profile]', err.message));
 
   bot.launch()
     .then(() => console.log(`[telegram] ${BRAND_NAME} bot started as @${TELEGRAM_BOT_USERNAME}`))
