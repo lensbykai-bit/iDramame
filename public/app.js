@@ -4,6 +4,7 @@ const modal = $('#modal');
 const modalBody = $('#modalBody');
 let stories = [];
 let activeOrder = null;
+let meta = { testMode: false };
 
 function money(v){ return `${Number(v).toLocaleString('en-US')}៛`; }
 function esc(v=''){ return String(v).replace(/[&<>'\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c])); }
@@ -22,6 +23,14 @@ function storyCard(s){
       <div class="card-bottom"><div class="price">${money(s.price_khr)}</div><button class="card-btn" data-story="${esc(s.id)}">មើល Trailer</button></div>
     </div>
   </article>`;
+}
+
+async function loadMeta(){
+  try{
+    const r = await fetch('/api/meta');
+    const data = await r.json();
+    if(r.ok) meta = data || meta;
+  }catch{}
 }
 
 async function loadStories(){
@@ -44,26 +53,56 @@ $('#storyGrid').addEventListener('click', e => {
 
 function showStory(id){
   const s = stories.find(x=>x.id===id); if(!s) return;
+  const testBanner = meta.testMode
+    ? '<div class="status" style="margin:10px 0">🧪 <strong>TEST MODE</strong> — មិនមានការកាត់លុយពិតទេ។ ប្រើសម្រាប់សាក Unlock ប៉ុណ្ណោះ។</div>'
+    : '';
+  const buyText = meta.testMode ? '🧪 សាកល្បង Payment' : '💳 ទិញតាម Bakong KHQR';
+  const note = meta.testMode
+    ? 'TEST MODE នឹងបើក Watch Page ដោយមិនផ្ញើ Transaction ទៅ Bakong។'
+    : `ការទិញ និងការមើលរឿងពេញធ្វើនៅលើ ${BRAND_NAME}។ បង់ជោគជ័យរួច Website នឹងបើក Watch Page សម្រាប់អ្នក។`;
+
   modalBody.innerHTML = `
     <div class="eyebrow">TRAILER / PREVIEW</div>
     <h2 class="modal-title">${esc(s.title)}</h2>
+    ${testBanner}
     ${s.preview_video_url ? `<video controls playsinline controlsList="nodownload" style="width:100%;border-radius:16px;margin:10px 0" src="${esc(s.preview_video_url)}"></video>` : '<div class="status">🎞️ រឿងនេះមិនទាន់មាន Trailer ទេ។</div>'}
     <p class="modal-preview">${esc(s.preview)}</p>
     <div class="amount-row"><span class="muted">តម្លៃរឿងពេញ</span><strong class="price">${money(s.price_khr)}</strong></div>
-    <button class="buy-btn" id="buyBtn" style="width:100%;margin-top:18px">💳 ទិញតាម Bakong KHQR</button>
-    <p class="small">ការទិញ និងការមើលរឿងពេញធ្វើនៅលើ ${BRAND_NAME}។ បង់ជោគជ័យរួច Website នឹងបើក Watch Page សម្រាប់អ្នក។</p>`;
+    <button class="buy-btn" id="buyBtn" style="width:100%;margin-top:18px">${buyText}</button>
+    <p class="small">${note}</p>`;
   openModal();
   $('#buyBtn').addEventListener('click', () => createOrder(s.id));
 }
 
 async function createOrder(storyId){
   const btn = $('#buyBtn');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>កំពុងបង្កើត KHQR…';
+  btn.disabled = true;
+  btn.innerHTML = meta.testMode
+    ? '<span class="spinner"></span>កំពុងបង្កើត Test Order…'
+    : '<span class="spinner"></span>កំពុងបង្កើត KHQR…';
+
   try{
     const r = await fetch('/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({storyId})});
     const data = await r.json();
     if(!r.ok) throw new Error(data.error || 'Order failed');
     activeOrder = data.orderId;
+
+    if(data.testMode){
+      modalBody.innerHTML = `
+        <div class="eyebrow">🧪 BAKONG TEST MODE</div>
+        <h2 class="modal-title">${esc(data.title)}</h2>
+        <div class="pay-box">
+          <div class="status" style="margin-bottom:14px">⚠️ TEST MODE — មិនបង្កើត KHQR ពិត និងមិនកាត់លុយពីគណនីណាមួយទេ។</div>
+          <div class="amount-row"><span>តម្លៃសាកល្បង</span><strong class="price">${money(data.amount)}</strong></div>
+          <div class="order-id">Test Order: ${esc(data.orderId)}</div>
+          <div id="status" class="status">🧪 ចុចប៊ូតុងខាងក្រោម ដើម្បីសាកល្បង Payment Success និង Unlock Watch Page។</div>
+          <button id="checkBtn" class="check-btn" style="width:100%;margin-top:13px">🧪 សាកល្បង Payment Success</button>
+        </div>
+        <p class="small">បន្ទាប់ពីសាករួច សូមប្តូរ BAKONG_TEST_MODE ទៅ false មុនប្រើទទួលការទូទាត់ពិត។</p>`;
+      $('#checkBtn').addEventListener('click', checkPayment);
+      return;
+    }
+
     modalBody.innerHTML = `
       <div class="eyebrow">BAKONG KHQR</div>
       <h2 class="modal-title">${esc(data.title)}</h2>
@@ -77,7 +116,8 @@ async function createOrder(storyId){
       <p class="small">កុំបិទផ្ទាំងនេះរហូតដល់ការបង់ត្រូវបានបញ្ជាក់។</p>`;
     $('#checkBtn').addEventListener('click', checkPayment);
   }catch(err){
-    btn.disabled=false; btn.textContent='💳 ទិញតាម Bakong KHQR';
+    btn.disabled=false;
+    btn.textContent = meta.testMode ? '🧪 សាកល្បង Payment' : '💳 ទិញតាម Bakong KHQR';
     modalBody.insertAdjacentHTML('beforeend', `<div class="status error">${esc(err.message)}</div>`);
   }
 }
@@ -86,19 +126,33 @@ async function checkPayment(){
   if(!activeOrder) return;
   const btn = $('#checkBtn'); const status = $('#status');
   btn.disabled=true; btn.innerHTML='<span class="spinner"></span>កំពុងពិនិត្យ…';
-  status.className='status'; status.textContent='កំពុងពិនិត្យ Transaction ជាមួយ Bakong…';
+  status.className='status';
+  status.textContent = meta.testMode ? '🧪 កំពុងសាកល្បង Payment Success…' : 'កំពុងពិនិត្យ Transaction ជាមួយ Bakong…';
+
   try{
     const r = await fetch(`/api/orders/${encodeURIComponent(activeOrder)}/check`,{method:'POST'});
     const data = await r.json();
     if(!r.ok) throw new Error(data.error || 'Check failed');
     if(data.paid){
-      status.className='status success'; status.textContent='✅ បង់ជោគជ័យ! កំពុងបើករឿងពេញ…';
+      status.className='status success';
+      status.textContent = data.testMode
+        ? '✅ TEST Payment ជោគជ័យ! កំពុងបើក Watch Page…'
+        : '✅ បង់ជោគជ័យ! កំពុងបើករឿងពេញ…';
       setTimeout(()=>{ location.href=data.watchUrl; },700);
       return;
     }
     status.textContent='⏳ មិនទាន់រកឃើញការបង់ទេ។ សូមពិនិត្យចំនួនទឹកប្រាក់ ហើយសាកម្ដងទៀត។';
-  }catch(err){ status.className='status error'; status.textContent=err.message; }
-  btn.disabled=false; btn.textContent='🔄 ពិនិត្យម្តងទៀត';
+  }catch(err){
+    status.className='status error';
+    status.textContent=err.message;
+  }
+  btn.disabled=false;
+  btn.textContent = meta.testMode ? '🧪 សាកល្បងម្តងទៀត' : '🔄 ពិនិត្យម្តងទៀត';
 }
 
-loadStories();
+async function init(){
+  await loadMeta();
+  await loadStories();
+}
+
+init();
