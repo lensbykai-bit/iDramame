@@ -1,0 +1,26 @@
+@import url('https://fonts.googleapis.com/css2?family=Kantumruy+Pro:ital,wght@0,100..700;1,100..700&display=swap');
+
+html, body, button, input, textarea, select, option, a, p, span, div, label, strong, h1, h2, h3, h4, h5, h6 {
+  font-family: "Kantumruy Pro", "Noto Sans Khmer", system-ui, -apple-system, "Segoe UI", sans-serif !important;
+}
+
+body {
+  font-feature-settings: "kern" 1;
+  text-rendering: optimizeLegibility;
+}
+
+.hero h1,
+.modal-title,
+.section h2,
+.admin-login h1,
+.admin-head h1,
+.card-body h3,
+.admin-story-copy h3 {
+  line-height: 1.35;
+  letter-spacing: 0 !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  font-family: "Kantumruy Pro", "Noto Sans Khmer", system-ui, sans-serif !important;
+}
