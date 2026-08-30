@@ -24,5 +24,6 @@ if (!currentMerchant || legacyBrandNames.some((name) => name.toLowerCase() === c
   process.env.BAKONG_MERCHANT_NAME = TARGET_BRAND;
 }
 
+// Web Only: customers no longer use the Telegram bot.
+// BOT_TOKEN/TELEGRAM_STORAGE_CHAT_ID remain available only for private media storage in server.js.
 require('./server');
-require('./telegram');
