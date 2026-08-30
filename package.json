@@ -1,8 +1,8 @@
 {
-  "name": "khnhom-chong-merl-rueng-ai",
-  "version": "2.2.0",
+  "name": "idrama-ai",
+  "version": "2.3.0",
   "private": true,
-  "description": "ខ្ញុំចង់មើលរឿងអេអាយ — Cambodia AI drama web store with Bakong KHQR, protected watch pages, and Telegram catalog bot",
+  "description": "iDramaAi — Cambodia AI drama web store with Bakong KHQR, protected watch pages, and Telegram catalog bot",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
