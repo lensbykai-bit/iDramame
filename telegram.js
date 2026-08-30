@@ -71,7 +71,7 @@ function moneyKHR(amount) {
   return `${Number(amount || 0).toLocaleString('en-US')}៛`;
 }
 
-function escHtml(value='') {
+function escHtml(value = '') {
   return String(value).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
 }
 
@@ -90,19 +90,14 @@ function mainMenu() {
 async function showCatalog(ctx) {
   const stories = longStories();
   if (!stories.length) {
-    return ctx.reply(
-      '🎞️ មិនទាន់មានរឿងវែងក្នុង Telegram ទេ។ រឿងខ្លីអាចមើលនៅ Website។',
-      mainMenu()
-    );
+    return ctx.reply('🎞️ មិនទាន់មានរឿងវែងក្នុង Telegram ទេ។ រឿងខ្លីអាចមើលនៅ Website។', mainMenu());
   }
 
   const rows = stories.map((story, index) => {
     if (story.full_video_file_id || story.preview_video_file_id || story.cover_file_id) {
       return [Markup.button.callback(`▶️ ${story.title}`, `story:${index}`)];
     }
-    if (story.telegram_url) {
-      return [Markup.button.url(`▶️ ${story.title}`, story.telegram_url)];
-    }
+    if (story.telegram_url) return [Markup.button.url(`▶️ ${story.title}`, story.telegram_url)];
     return [Markup.button.callback(`⏳ ${story.title}`, 'not_ready')];
   });
   rows.push([Markup.button.url('🌐 មើលរឿងខ្លីនៅ Website', PUBLIC_BASE_URL)]);
@@ -113,14 +108,16 @@ async function showCatalog(ctx) {
   );
 }
 
-async function sendVideoOrDocument(ctx, fileId, caption) {
+async function sendVideoOrDocument(ctx, fileId, caption, protect = false) {
   if (!fileId) return false;
+  const extra = { caption, protect_content: Boolean(protect) };
+
   try {
-    await ctx.replyWithVideo(fileId, { caption, supports_streaming: true });
+    await ctx.replyWithVideo(fileId, { ...extra, supports_streaming: true });
     return true;
   } catch (videoError) {
     try {
-      await ctx.replyWithDocument(fileId, { caption });
+      await ctx.replyWithDocument(fileId, extra);
       return true;
     } catch (documentError) {
       console.error('[telegram-media-send]', videoError.message, '|', documentError.message);
@@ -130,8 +127,7 @@ async function sendVideoOrDocument(ctx, fileId, caption) {
 }
 
 async function showStoryDetails(ctx, index) {
-  const stories = longStories();
-  const story = stories[index];
+  const story = longStories()[index];
   if (!story) return ctx.reply('រកមិនឃើញរឿងនេះទេ។', mainMenu());
 
   const caption = `🎬 <b>${escHtml(story.title)}</b>\n💰 ${moneyKHR(story.price_khr)}\n\n${escHtml(story.preview || '')}`;
@@ -163,7 +159,7 @@ async function sendTrailer(ctx, index) {
     return ctx.answerCbQuery('រឿងនេះមិនទាន់មាន Trailer ទេ។', { show_alert: true });
   }
   await ctx.answerCbQuery('កំពុងផ្ញើ Trailer…');
-  await sendVideoOrDocument(ctx, story.preview_video_file_id, `🎞️ Trailer • ${story.title}`);
+  await sendVideoOrDocument(ctx, story.preview_video_file_id, `🎞️ Trailer • ${story.title}`, false);
 }
 
 async function sendFullMovie(ctx, index) {
@@ -172,13 +168,11 @@ async function sendFullMovie(ctx, index) {
     return ctx.answerCbQuery('រឿងនេះមិនទាន់មាន Full Movie ទេ។', { show_alert: true });
   }
   await ctx.answerCbQuery('កំពុងផ្ញើ Full Movie…');
-  await sendVideoOrDocument(ctx, story.full_video_file_id, `🎬 ${story.title} • Full Movie`);
+  await sendVideoOrDocument(ctx, story.full_video_file_id, `🔒 ${story.title} • Full Movie`, true);
 }
 
 async function showLargeMovieAdmin(ctx) {
-  if (!isStorageAdmin(ctx)) {
-    return ctx.reply('⛔ Command នេះសម្រាប់ Admin ប៉ុណ្ណោះ។');
-  }
+  if (!isStorageAdmin(ctx)) return ctx.reply('⛔ Command នេះសម្រាប់ Admin ប៉ុណ្ណោះ។');
 
   const stories = longStories();
   if (!stories.length) {
@@ -186,10 +180,7 @@ async function showLargeMovieAdmin(ctx) {
   }
 
   const rows = stories.map((story, index) => [
-    Markup.button.callback(
-      `${story.full_video_file_id ? '✅' : '📥'} ${story.title}`,
-      `adminfull:${index}`
-    )
+    Markup.button.callback(`${story.full_video_file_id ? '✅' : '📥'} ${story.title}`, `adminfull:${index}`)
   ]);
   rows.push([Markup.button.callback('❌ បោះបង់ Upload', 'cancel_large_upload')]);
 
@@ -202,7 +193,8 @@ async function showLargeMovieAdmin(ctx) {
 async function attachIncomingLargeMovie(ctx) {
   if (!isStorageAdmin(ctx)) return;
 
-  const storyId = pendingLargeMovie.get(String(ctx.chat.id));
+  const chatId = String(ctx.chat.id);
+  const storyId = pendingLargeMovie.get(chatId);
   if (!storyId) return;
 
   const media = ctx.message?.video || ctx.message?.document;
@@ -211,7 +203,7 @@ async function attachIncomingLargeMovie(ctx) {
   const stories = loadStories();
   const index = stories.findIndex((story) => story.id === storyId && story.placement === 'telegram');
   if (index < 0) {
-    pendingLargeMovie.delete(String(ctx.chat.id));
+    pendingLargeMovie.delete(chatId);
     return ctx.reply('រកមិនឃើញរឿងដែលបានជ្រើសទេ។ សូមវាយ /adminmovies ម្តងទៀត។');
   }
 
@@ -226,7 +218,7 @@ async function attachIncomingLargeMovie(ctx) {
 
   try {
     const result = await persistStories(stories, `Attach large full movie: ${story.title}`);
-    pendingLargeMovie.delete(String(ctx.chat.id));
+    pendingLargeMovie.delete(chatId);
 
     const sizeMb = story.full_video_size ? (story.full_video_size / 1024 / 1024).toFixed(1) : '?';
     const persistText = result.persistedToGitHub
@@ -234,7 +226,7 @@ async function attachIncomingLargeMovie(ctx) {
       : '⚠️ Metadata រក្សាទុកលើ Server ប៉ុណ្ណោះ — សូមពិនិត្យ GITHUB_TOKEN';
 
     await ctx.reply(
-      `✅ <b>ភ្ជាប់ Full Movie ជោគជ័យ</b>\n\n🎬 ${escHtml(story.title)}\n📦 ${sizeMb} MB\n${persistText}\n\nឥឡូវអ្នកមើលអាចចុច “មើល Full Movie” ក្នុង Bot បាន។`,
+      `✅ <b>ភ្ជាប់ Full Movie ជោគជ័យ</b>\n\n🎬 ${escHtml(story.title)}\n📦 ${sizeMb} MB\n🔒 Content Protection: ON\n${persistText}\n\nពេល Bot ផ្ញើ Full Movie ទៅអ្នកមើល វានឹងបិទ Save/Forward តាម Telegram Content Protection។`,
       { parse_mode: 'HTML' }
     );
   } catch (error) {
@@ -247,8 +239,8 @@ async function syncBotProfile(bot) {
   const description = `${BRAND_NAME} — រឿងវែងមើលក្នុង Telegram • រឿងខ្លីមើលនៅ Website។`;
   const shortDescription = `${BRAND_NAME} | AI Drama`;
   const languages = [undefined, 'en', 'km'];
-
   const tasks = [];
+
   for (const languageCode of languages) {
     const lang = languageCode ? { language_code: languageCode } : {};
     tasks.push(bot.telegram.callApi('setMyName', { name: BRAND_NAME, ...lang }));
@@ -292,20 +284,23 @@ function startTelegram() {
 
   bot.command('catalog', showCatalog);
   bot.command('adminmovies', showLargeMovieAdmin);
+
   bot.command('cancelupload', async (ctx) => {
     if (!isStorageAdmin(ctx)) return ctx.reply('⛔ Command នេះសម្រាប់ Admin ប៉ុណ្ណោះ។');
     pendingLargeMovie.delete(String(ctx.chat.id));
     await ctx.reply('✅ បានបោះបង់ការភ្ជាប់ Full Movie។');
   });
+
   bot.command('myid', async (ctx) => {
     await ctx.reply(
       `🆔 Telegram Chat ID របស់អ្នក៖\n<code>${ctx.chat.id}</code>\n\nCopy លេខនេះទៅ Render → Environment → TELEGRAM_STORAGE_CHAT_ID។`,
       { parse_mode: 'HTML' }
     );
   });
+
   bot.command('help', async (ctx) => {
     await ctx.reply(
-      `💬 <b>របៀបប្រើ ${BRAND_NAME}</b>\n\n1) រឿងវែង → ចុច “រឿងវែងក្នុង Telegram”\n2) ជ្រើសរឿង → មើល Trailer ឬ Full Movie ក្នុង Bot\n3) រឿងខ្លី → ចុច “រឿងខ្លីនៅ Website”\n4) Admin: Full Movie ធំៗ → វាយ /adminmovies → ជ្រើសរឿង → ផ្ញើ Video/File មក Bot ដោយផ្ទាល់។`,
+      `💬 <b>របៀបប្រើ ${BRAND_NAME}</b>\n\n1) រឿងវែង → ចុច “រឿងវែងក្នុង Telegram”\n2) ជ្រើសរឿង → មើល Trailer ឬ Full Movie ក្នុង Bot\n3) រឿងខ្លី → ចុច “រឿងខ្លីនៅ Website”\n4) Admin: Full Movie ធំៗ → វាយ /adminmovies → ជ្រើសរឿង → ផ្ញើ Video/File មក Bot ដោយផ្ទាល់។\n\n🔒 Full Movie ដែល Bot ផ្ញើមាន Content Protection ដើម្បីបិទ Save/Forward។`,
       { parse_mode: 'HTML', ...mainMenu() }
     );
   });
@@ -339,7 +334,7 @@ function startTelegram() {
     pendingLargeMovie.set(String(ctx.chat.id), story.id);
     await ctx.answerCbQuery('បានជ្រើសរឿង');
     await ctx.reply(
-      `📥 <b>${escHtml(story.title)}</b>\n\nឥឡូវសូមផ្ញើ <b>Full Movie</b> មក Bot នេះជា Video ឬ File។\n\nមិនចាំបាច់ Download/Upload ឆ្លងកាត់ Website ទេ។ វីដេអូនឹងនៅក្នុង Telegram ហើយ Bot រក្សា file_id។`,
+      `📥 <b>${escHtml(story.title)}</b>\n\nឥឡូវសូមផ្ញើ <b>Full Movie</b> មក Bot នេះជា Video ឬ File។\n\nមិនចាំបាច់ Download/Upload ឆ្លងកាត់ Website ទេ។ វីដេអូនឹងនៅក្នុង Telegram ហើយ Bot រក្សា file_id។\n\n🔒 ពេល Bot ផ្ញើ Full Movie ទៅអ្នកមើល វានឹងបើក Content Protection ដោយស្វ័យប្រវត្តិ។`,
       { parse_mode: 'HTML' }
     );
   });
@@ -360,7 +355,6 @@ function startTelegram() {
   });
 
   bot.on(['video', 'document'], attachIncomingLargeMovie);
-
   bot.catch((err) => console.error('[telegram]', err));
 
   syncBotProfile(bot).catch((err) => console.error('[telegram-profile]', err.message));
