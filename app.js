@@ -1,8 +1,18 @@
 require('dotenv').config();
 
-process.env.BRAND_NAME = process.env.BRAND_NAME || 'iDramaAi';
-process.env.BAKONG_STORE_LABEL = process.env.BAKONG_STORE_LABEL || 'iDramaAi';
-if (!process.env.BAKONG_MERCHANT_NAME || ['idrama.me','ai story kh','ខ្ញុំចង់មើលរឿងអេអាយ'].includes(process.env.BAKONG_MERCHANT_NAME.trim().toLowerCase())) {
+const legacyBrandNames = ['ខ្ញុំចង់មើលរឿងអេអាយ', 'iDrama.me', 'AI STORY KH'];
+const currentBrand = String(process.env.BRAND_NAME || '').trim();
+if (!currentBrand || legacyBrandNames.some((name) => name.toLowerCase() === currentBrand.toLowerCase())) {
+  process.env.BRAND_NAME = 'iDramaAi';
+}
+
+const currentStoreLabel = String(process.env.BAKONG_STORE_LABEL || '').trim();
+if (!currentStoreLabel || legacyBrandNames.some((name) => name.toLowerCase() === currentStoreLabel.toLowerCase())) {
+  process.env.BAKONG_STORE_LABEL = 'iDramaAi';
+}
+
+const currentMerchant = String(process.env.BAKONG_MERCHANT_NAME || '').trim();
+if (!currentMerchant || legacyBrandNames.some((name) => name.toLowerCase() === currentMerchant.toLowerCase())) {
   process.env.BAKONG_MERCHANT_NAME = 'iDramaAi';
 }
 
