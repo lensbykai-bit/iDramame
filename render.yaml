@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: idrama-me-telegram-bot
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN_TELEGRAM_ID
+        sync: false
+      - key: BAKONG_ACCOUNT_ID
+        sync: false
+      - key: BAKONG_MERCHANT_NAME
+        value: iDrama.me
+      - key: BAKONG_MERCHANT_CITY
+        value: PHNOM PENH
+      - key: BAKONG_MOBILE_NUMBER
+        sync: false
+      - key: BAKONG_API_BASE_URL
+        value: https://api-bakong.nbc.gov.kh
+      - key: BAKONG_TOKEN
+        sync: false
