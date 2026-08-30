@@ -65,18 +65,24 @@
               <span id="trailerStatus" class="muted">មិនទាន់ជ្រើសវីដេអូ</span>
             </label>
 
-            <label id="fullMediaLabel">Full Video / Full Movie — ជ្រើសវីដេអូពេញ
+            <label id="fullMediaLabel">Full Video — សម្រាប់រឿងខ្លីក្នុង Web
               <input id="fullFile" class="admin-input" type="file" accept="video/*" />
               <span id="fullStatus" class="muted">មិនទាន់ជ្រើសវីដេអូពេញ</span>
             </label>
-
-            <div class="status">📤 មិនចាំបាច់មាន Link ទេ។ ពេលចុច “Upload + រក្សាទុក” Cover, Trailer និង Full Video នឹងត្រូវ Upload ទៅ Telegram ដោយស្វ័យប្រវត្តិ ហើយរក្សា file_id សម្រាប់ប្រើក្នុង iDramaAi។</div>
           </div>
 
-          <div id="placementHint" class="status">🌐 Web: រឿងខ្លីបង្ហាញនៅ Website ហើយ Media ត្រូវរក្សាទុកក្នុង Telegram។</div>
+          <div id="telegramLargeMovieHelp" class="security-card" hidden>
+            <div class="security-icon">🎬</div>
+            <div>
+              <h3>Full Movie ធំៗ — Upload ក្នុង Telegram ដោយផ្ទាល់</h3>
+              <p>សម្រាប់រឿងវែង សូម Save រឿងនេះជាមុន។ បន្ទាប់មកចូល <strong>@iDramaAiBot</strong> → វាយ <strong>/adminmovies</strong> → ជ្រើសឈ្មោះរឿង → ផ្ញើ Full Movie ជា Video ឬ File មក Bot។ មិនចាំបាច់ Upload Full Movie ឆ្លងកាត់ Website/Render ទេ។</p>
+            </div>
+          </div>
+
+          <div id="placementHint" class="status">🌐 Web: Cover, Trailer និង Full Video អាច Upload ពី Admin ហើយរក្សាទុកក្នុង Telegram។</div>
 
           <div class="admin-actions">
-            <button class="primary-btn" type="submit">💾 Upload + រក្សាទុក</button>
+            <button class="primary-btn" type="submit">💾 រក្សាទុក</button>
             <button id="cancelEdit" class="ghost-btn" type="button" hidden>បោះបង់កែ</button>
           </div>
           <div id="formStatus" class="status" hidden></div>
@@ -92,7 +98,7 @@
         <div class="security-icon">ℹ️</div>
         <div>
           <h3>របៀបដាក់រឿង</h3>
-          <p><strong>រឿងខ្លី:</strong> ជ្រើស Web → ជ្រើស Cover/Trailer/Full Video → Save។ <strong>រឿងវែង:</strong> ជ្រើស Telegram → ជ្រើស Cover/Trailer/Full Movie → Save។ អ្នកមិនចាំបាច់ Copy URL ឬ Telegram Post Link ទៀតទេ។</p>
+          <p><strong>រឿងខ្លី:</strong> Web Admin → Cover + Trailer + Full Video។ <strong>រឿងវែង:</strong> Web Admin → Cover + Trailer + Save → Telegram Bot /adminmovies → ផ្ញើ Full Movie ធំៗដោយផ្ទាល់។</p>
         </div>
       </section>
     </section>
