@@ -1,4 +1,4 @@
-# ខ្ញុំចង់មើលរឿងអេអាយ
+# iDramaAi
 
 Platform សម្រាប់កម្ពុជា៖ មើល Trailer រឿង AI, ទិញរឿងពេញតាម Bakong KHQR និងមើល Full Video តាម Signed Watch Page។ Telegram Bot ប្រើសម្រាប់ Catalog និងនាំអ្នកមើលទៅ Website។
 
@@ -17,7 +17,7 @@ Telegram / Website → មើល Trailer → ទិញតាម Bakong KHQR ន�
 - Full Video URL មិនបង្ហាញក្នុង Public Catalog API
 - Web Admin សម្រាប់បន្ថែម/កែ/លុបរឿង
 - Telegram Bot `/start`, `/catalog`, `/help`
-- Telegram Bot កំណត់ Display Name/Description ទៅ «ខ្ញុំចង់មើលរឿងអេអាយ» ដោយស្វ័យប្រវត្តិពេល Server ចាប់ផ្តើម
+- Telegram Bot កំណត់ Display Name/Description ទៅ `iDramaAi` ដោយស្វ័យប្រវត្តិពេល Server ចាប់ផ្តើម
 
 ## URLs
 
@@ -25,20 +25,20 @@ Telegram / Website → មើល Trailer → ទិញតាម Bakong KHQR ន�
 - Admin: `https://idramame.onrender.com/admin.html`
 - Telegram username បច្ចុប្បន្ន: `@iDrama_Me_Bot`
 
-URL និង Telegram username ខាងលើជាឈ្មោះបច្ចេកទេសរបស់ account/service ចាស់។ Brand ដែលអ្នកមើលឃើញក្នុង Website និង Bot គឺ «ខ្ញុំចង់មើលរឿងអេអាយ»។
+URL និង Telegram username ខាងលើជាឈ្មោះបច្ចេកទេសបច្ចុប្បន្ន។ Brand ដែលអ្នកមើលឃើញក្នុង Website និង Bot គឺ `iDramaAi`។
 
 ## Render Environment Variables
 
 កុំ Commit Secret ទៅ GitHub។ ដាក់នៅ Render Environment ប៉ុណ្ណោះ៖
 
 ```env
-BRAND_NAME=ខ្ញុំចង់មើលរឿងអេអាយ
+BRAND_NAME=iDramaAi
 BOT_TOKEN=
 PUBLIC_BASE_URL=https://idramame.onrender.com
 
 BAKONG_ACCOUNT_ID=
-BAKONG_MERCHANT_NAME=AI STORY KH
-BAKONG_STORE_LABEL=AI STORY KH
+BAKONG_MERCHANT_NAME=iDramaAi
+BAKONG_STORE_LABEL=iDramaAi
 BAKONG_MERCHANT_CITY=PHNOM PENH
 BAKONG_MOBILE_NUMBER=
 BAKONG_API_BASE_URL=https://api-bakong.nbc.gov.kh
