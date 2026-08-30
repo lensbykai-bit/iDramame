@@ -15,11 +15,12 @@
     .pay-head{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:26px}
     .pay-title h1{font-size:clamp(30px,4vw,46px);margin:8px 0 0}.pay-title .eyebrow{color:#20e0e8;letter-spacing:.12em;font-weight:800}
     .back-admin{display:inline-flex;align-items:center;gap:8px;text-decoration:none;color:#fff;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);padding:11px 16px;border-radius:14px}
-    .pay-login,.pay-card,.orders-panel{background:rgba(17,12,23,.92);border:1px solid rgba(255,255,255,.10);box-shadow:0 18px 50px rgba(0,0,0,.25)}
+    .pay-login,.pay-card,.orders-panel,.khqr-maker{background:rgba(17,12,23,.92);border:1px solid rgba(255,255,255,.10);box-shadow:0 18px 50px rgba(0,0,0,.25)}
     .pay-login{max-width:520px;margin:55px auto;border-radius:22px;padding:26px}.pay-login h2{margin:0 0 8px;font-size:26px}.pay-login input{box-sizing:border-box;width:100%;margin:14px 0 14px;border-radius:14px;border:1px solid rgba(255,255,255,.13);background:#0d0912;color:#fff;padding:14px 15px;font-size:16px;outline:none}.pay-login input:focus{border-color:#20e0e8;box-shadow:0 0 0 3px rgba(32,224,232,.12)}
+    .khqr-maker{border-radius:24px;padding:22px;margin-bottom:20px}.khqr-maker h2{margin:0 0 7px;font-size:28px}.khqr-maker p{margin:0;opacity:.72}.maker-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;margin-top:17px}.maker-row input{width:100%;box-sizing:border-box;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:#0d0912;color:#fff;padding:14px 15px;font-size:17px;outline:none}.maker-row input:focus{border-color:#20e0e8;box-shadow:0 0 0 3px rgba(32,224,232,.12)}.generate-btn{border:0;border-radius:14px;padding:13px 20px;background:linear-gradient(135deg,#20e0e8,#8b5cf6);color:#071013;font-weight:900;cursor:pointer;min-width:180px}.generate-btn:disabled{opacity:.55;cursor:not-allowed}.qr-result{display:none;margin-top:18px;padding:18px;border-radius:18px;background:#fff;color:#111;text-align:center}.qr-result.open{display:block}.qr-result img{display:block;width:min(360px,100%);margin:12px auto;border-radius:12px}.qr-meta{display:grid;gap:6px;font-size:14px}.real-badge{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:999px;background:#dcfce7;color:#14532d;font-weight:900;font-size:13px}.maker-status{margin-top:12px;line-height:1.7}
     .orders-panel{border-radius:24px;padding:22px}.orders-toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:18px}.orders-toolbar h2{margin:0 0 6px;font-size:29px}.orders-toolbar p{margin:0;opacity:.72}
     .pay-grid{display:grid;gap:14px}.pay-card{border-radius:18px;padding:18px 20px;display:grid;grid-template-columns:minmax(0,1.5fr) .7fr .8fr;gap:16px;align-items:center}.pay-card strong{font-size:18px}.pay-actions{display:flex;gap:9px;flex-wrap:wrap;justify-content:flex-end}.pay-status{font-weight:800;margin-top:5px}.pay-status.awaiting_review{color:#ffd66b}.pay-status.paid{color:#7df6a4}.pay-status.rejected{color:#ff8d8d}.pay-status.pending{color:#b8b8c7}.admin-btn{border:0;border-radius:12px;padding:11px 15px;font-weight:800;cursor:pointer}.admin-btn:disabled{opacity:.55;cursor:not-allowed}.approve{background:#27d467;color:#06150a}.reject{background:#ef4444;color:#fff}.refresh{background:#fff;color:#111;min-width:110px}.muted-small{opacity:.62;font-size:12px;line-height:1.7}.empty-note{grid-column:1/-1;text-align:center;padding:30px 16px;color:#d5ccdc}.manual-note{display:flex;gap:10px;align-items:flex-start;margin-top:18px;padding:14px 16px;border-radius:14px;background:rgba(255,214,107,.08);border:1px solid rgba(255,214,107,.18);color:#f2e7bf}.status{line-height:1.7}
-    @media(max-width:760px){.pay-admin{padding:22px 14px 60px}.pay-card{grid-template-columns:1fr}.pay-actions{justify-content:flex-start}.orders-panel{padding:16px}.pay-head{align-items:flex-start}.refresh{width:100%}}
+    @media(max-width:760px){.pay-admin{padding:22px 14px 60px}.pay-card{grid-template-columns:1fr}.pay-actions{justify-content:flex-start}.orders-panel,.khqr-maker{padding:16px}.pay-head{align-items:flex-start}.refresh{width:100%}.maker-row{grid-template-columns:1fr}.generate-btn{width:100%}}
   </style>
 </head>
 <body>
@@ -37,13 +38,36 @@
       <div id="loginStatus" class="status" style="margin-top:12px"></div>
     </section>
 
-    <section id="ordersBox" class="orders-panel" hidden>
-      <div class="orders-toolbar">
-        <div><h2>ការបញ្ជាទិញ KHQR</h2><p>ចុច Approve តែបន្ទាប់ពីអ្នកបានពិនិត្យថាប្រាក់ចូល Bakong រួចរាល់។</p></div>
-        <button id="refreshBtn" class="admin-btn refresh">↻ ផ្ទុកឡើងវិញ</button>
-      </div>
-      <div class="manual-note"><span>🛡️</span><span>ប្រព័ន្ធនេះប្រើការអនុម័តដោយ Admin។ អតិថិជនមិនត្រូវបាន Unlock ដោយស្វ័យប្រវត្តិពីផ្ទាំងនេះទេ។</span></div>
-      <div id="orders" class="pay-grid" style="margin-top:16px"></div>
+    <section id="ordersBox" hidden>
+      <section class="khqr-maker">
+        <div class="eyebrow">REAL BAKONG KHQR</div>
+        <h2>បង្កើត KHQR ពិត</h2>
+        <p>បញ្ចូលចំនួនទឹកប្រាក់ជា KHR។ QR នេះភ្ជាប់ទៅ BAKONG_ACCOUNT_ID ពិតដែលបានកំណត់នៅ Server។</p>
+        <div class="maker-row">
+          <input id="realKhqrAmount" type="number" min="100" max="100000000" step="100" inputmode="numeric" placeholder="ឧ. 5000" />
+          <button id="generateKhqrBtn" class="generate-btn">បង្កើត KHQR ពិត</button>
+        </div>
+        <div id="khqrMakerStatus" class="maker-status"></div>
+        <div id="realKhqrResult" class="qr-result">
+          <span class="real-badge">✓ REAL KHQR • KHR</span>
+          <div id="realKhqrAmountText" style="font-size:28px;font-weight:900;margin-top:10px"></div>
+          <img id="realKhqrImage" alt="Real Bakong KHQR" />
+          <div class="qr-meta">
+            <strong id="realKhqrMerchant"></strong>
+            <span id="realKhqrBill"></span>
+            <span>KHQR នេះមានសុពលភាពប្រហែល 10 នាទី</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="orders-panel">
+        <div class="orders-toolbar">
+          <div><h2>ការបញ្ជាទិញ KHQR</h2><p>ចុច អនុម័ត តែបន្ទាប់ពីអ្នកបានពិនិត្យថាប្រាក់ចូល Bakong រួចរាល់។</p></div>
+          <button id="refreshBtn" class="admin-btn refresh">↻ ផ្ទុកឡើងវិញ</button>
+        </div>
+        <div class="manual-note"><span>🛡️</span><span>ប្រព័ន្ធនេះប្រើការអនុម័តដោយ Admin។ អតិថិជនមិនត្រូវបាន Unlock ដោយស្វ័យប្រវត្តិពីផ្ទាំងនេះទេ។</span></div>
+        <div id="orders" class="pay-grid" style="margin-top:16px"></div>
+      </section>
     </section>
   </main>
 
