@@ -29,3 +29,9 @@ services:
         value: https://idramame.onrender.com
       - key: ACCESS_TOKEN_SECRET
         sync: false
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: GITHUB_REPO
+        value: lensbykai-bit/iDramame
+      - key: GITHUB_BRANCH
+        value: main
