@@ -36,12 +36,11 @@ function makeRealKhqr(amount) {
   };
   if (mobileNumber) optionalData.mobileNumber = mobileNumber;
 
-  let info;
-  try {
-    info = new IndividualInfo(accountId, khqrData.currency.khr, merchantName, merchantCity, optionalData);
-  } catch {
-    info = new IndividualInfo(accountId, merchantName, merchantCity, optionalData);
-  }
+  // Bakong SDK signature:
+  // new IndividualInfo(accountId, merchantName, merchantCity, optionalData)
+  // Currency belongs inside optionalData. Passing 116 as the second argument makes
+  // banking apps read "116" as the merchant name.
+  const info = new IndividualInfo(accountId, merchantName, merchantCity, optionalData);
 
   const khqr = new BakongKHQR();
   const response = khqr.generateIndividual(info);
