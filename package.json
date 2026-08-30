@@ -1,12 +1,12 @@
 {
-  "name": "idrama-me-telegram-bot",
-  "version": "1.0.0",
+  "name": "idrama-me-web-store",
+  "version": "2.0.0",
   "private": true,
-  "description": "iDrama.me Telegram short-drama store with Bakong KHQR payment verification",
-  "main": "bot.js",
+  "description": "iDrama.me Cambodia web store with Bakong KHQR and protected watch pages",
+  "main": "server.js",
   "scripts": {
-    "start": "node bot.js",
-    "dev": "node --watch bot.js"
+    "start": "node server.js",
+    "dev": "node --watch server.js"
   },
   "engines": {
     "node": ">=20"
@@ -15,7 +15,6 @@
     "bakong-khqr": "^1.0.11",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "qrcode": "^1.5.4",
-    "telegraf": "^4.16.3"
+    "qrcode": "^1.5.4"
   }
 }
