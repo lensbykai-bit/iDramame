@@ -5,10 +5,13 @@ const path = require('path');
 const crypto = require('crypto');
 const { Readable } = require('stream');
 const express = require('express');
+const multer = require('multer');
 const QRCode = require('qrcode');
 const { BakongKHQR, khqrData, IndividualInfo } = require('bakong-khqr');
 
 const BRAND_NAME = process.env.BRAND_NAME || 'iDramaAi';
+const BOT_TOKEN = process.env.BOT_TOKEN || '';
+const TELEGRAM_STORAGE_CHAT_ID = process.env.TELEGRAM_STORAGE_CHAT_ID || process.env.ADMIN_TELEGRAM_ID || '';
 const BAKONG_ACCOUNT_ID = process.env.BAKONG_ACCOUNT_ID || '';
 const BAKONG_MERCHANT_NAME = process.env.BAKONG_MERCHANT_NAME || 'iDramaAi';
 const BAKONG_MERCHANT_CITY = process.env.BAKONG_MERCHANT_CITY || 'PHNOM PENH';
@@ -26,12 +29,19 @@ const PORT = Number(process.env.PORT || 3000);
 const storiesPath = path.join(__dirname, 'stories.json');
 const storePath = path.join(__dirname, 'data', 'store.json');
 const publicPath = path.join(__dirname, 'public');
+const telegramApiBase = BOT_TOKEN ? `https://api.telegram.org/bot${BOT_TOKEN}` : '';
+const mediaUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 45 * 1024 * 1024 }
+});
 
 if (!BAKONG_ACCOUNT_ID) console.warn('[config] BAKONG_ACCOUNT_ID is missing. Checkout will be disabled.');
 if (!BAKONG_TOKEN) console.warn('[config] BAKONG_TOKEN is missing. Payment verification will be disabled.');
 if (!process.env.ACCESS_TOKEN_SECRET) console.warn('[config] ACCESS_TOKEN_SECRET is missing. Set one in Render so watch links survive restarts.');
 if (!ADMIN_PASSWORD) console.warn('[config] ADMIN_PASSWORD is missing. Web admin will be disabled.');
 if (!GITHUB_TOKEN) console.warn('[config] GITHUB_TOKEN is missing. Admin story changes will not persist across redeploys.');
+if (!BOT_TOKEN) console.warn('[config] BOT_TOKEN is missing. Telegram media storage is disabled.');
+if (!TELEGRAM_STORAGE_CHAT_ID) console.warn('[config] TELEGRAM_STORAGE_CHAT_ID is missing. Admin file uploads are disabled. Use /myid in the bot to get your chat ID.');
 
 function loadStories() {
   try {
@@ -58,6 +68,10 @@ function storyById(id) {
   return loadStories().find((story) => story.id === id);
 }
 
+function telegramMediaPath(fileId) {
+  return fileId ? `/api/media/${encodeURIComponent(fileId)}` : '';
+}
+
 function publicStory(story) {
   return {
     id: story.id,
@@ -65,8 +79,8 @@ function publicStory(story) {
     preview: story.preview || '',
     price_khr: Number(story.price_khr || 0),
     placement: placementOf(story),
-    cover_url: story.cover_url || '',
-    preview_video_url: story.preview_video_url || ''
+    cover_url: telegramMediaPath(story.cover_file_id) || story.cover_url || '',
+    preview_video_url: telegramMediaPath(story.preview_video_file_id) || story.preview_video_url || ''
   };
 }
 
@@ -156,6 +170,77 @@ async function persistStories(stories, message) {
   }
 
   return { persistedToGitHub: true };
+}
+
+async function telegramFileUrl(fileId) {
+  if (!BOT_TOKEN) throw new Error('BOT_TOKEN is not configured.');
+  const response = await fetch(`${telegramApiBase}/getFile?file_id=${encodeURIComponent(fileId)}`);
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || !body.ok || !body.result?.file_path) {
+    throw new Error(body.description || 'Telegram getFile failed.');
+  }
+  return `https://api.telegram.org/file/bot${BOT_TOKEN}/${body.result.file_path}`;
+}
+
+async function sendTelegramUpload(file, kind) {
+  if (!BOT_TOKEN) throw new Error('BOT_TOKEN is not configured.');
+  if (!TELEGRAM_STORAGE_CHAT_ID) throw new Error('TELEGRAM_STORAGE_CHAT_ID is not configured.');
+
+  const isCover = kind === 'cover';
+  const method = isCover ? 'sendPhoto' : 'sendVideo';
+  const field = isCover ? 'photo' : 'video';
+  const form = new FormData();
+  form.append('chat_id', TELEGRAM_STORAGE_CHAT_ID);
+  form.append('caption', `iDramaAi • ${kind} upload`);
+  if (!isCover) form.append('supports_streaming', 'true');
+  form.append(field, new Blob([file.buffer], { type: file.mimetype || 'application/octet-stream' }), file.originalname || `${kind}.bin`);
+
+  let response = await fetch(`${telegramApiBase}/${method}`, { method: 'POST', body: form });
+  let body = await response.json().catch(() => ({}));
+
+  if ((!response.ok || !body.ok) && !isCover) {
+    const fallback = new FormData();
+    fallback.append('chat_id', TELEGRAM_STORAGE_CHAT_ID);
+    fallback.append('caption', `iDramaAi • ${kind} upload`);
+    fallback.append('document', new Blob([file.buffer], { type: file.mimetype || 'application/octet-stream' }), file.originalname || `${kind}.bin`);
+    response = await fetch(`${telegramApiBase}/sendDocument`, { method: 'POST', body: fallback });
+    body = await response.json().catch(() => ({}));
+  }
+
+  if (!response.ok || !body.ok || !body.result) {
+    throw new Error(body.description || 'Telegram upload failed.');
+  }
+
+  if (isCover) {
+    const photos = body.result.photo || [];
+    const selected = photos[photos.length - 1];
+    if (!selected?.file_id) throw new Error('Telegram did not return a photo file ID.');
+    return { fileId: selected.file_id, messageId: body.result.message_id };
+  }
+
+  const media = body.result.video || body.result.document;
+  if (!media?.file_id) throw new Error('Telegram did not return a video file ID.');
+  return { fileId: media.file_id, messageId: body.result.message_id };
+}
+
+async function proxyRemoteMedia(req, res, sourceUrl) {
+  const headers = {};
+  if (req.headers.range) headers.Range = req.headers.range;
+  const upstream = await fetch(sourceUrl, { headers });
+  if (!upstream.ok && upstream.status !== 206) {
+    return res.status(502).send('Media source unavailable');
+  }
+
+  res.status(upstream.status);
+  for (const name of ['content-type', 'content-length', 'content-range', 'accept-ranges', 'last-modified']) {
+    const value = upstream.headers.get(name);
+    if (value) res.setHeader(name, value);
+  }
+  res.setHeader('Cache-Control', 'private, max-age=300');
+  res.setHeader('Content-Disposition', 'inline');
+
+  if (upstream.body) Readable.fromWeb(upstream.body).pipe(res);
+  else res.end();
 }
 
 function generateKHQR(order) {
@@ -264,7 +349,11 @@ app.use((req, res, next) => {
 app.use(express.static(publicPath, { etag: true, maxAge: '1h' }));
 
 app.get('/api/meta', (_req, res) => {
-  res.json({ brand: BRAND_NAME, checkout: Boolean(BAKONG_ACCOUNT_ID && BAKONG_TOKEN) });
+  res.json({
+    brand: BRAND_NAME,
+    checkout: Boolean(BAKONG_ACCOUNT_ID && BAKONG_TOKEN),
+    telegramUploads: Boolean(BOT_TOKEN && TELEGRAM_STORAGE_CHAT_ID)
+  });
 });
 
 app.get('/api/stories', (_req, res) => {
@@ -277,6 +366,16 @@ app.get('/api/stories/:id', (req, res) => {
   res.json({ story: publicStory(story) });
 });
 
+app.get('/api/media/:fileId', async (req, res) => {
+  try {
+    const sourceUrl = await telegramFileUrl(req.params.fileId);
+    await proxyRemoteMedia(req, res, sourceUrl);
+  } catch (error) {
+    console.error('[telegram-media]', error.message);
+    if (!res.headersSent) res.status(502).send('Telegram media unavailable');
+  }
+});
+
 app.post('/api/orders', async (req, res) => {
   if (!BAKONG_ACCOUNT_ID || !BAKONG_TOKEN) {
     return res.status(503).json({ error: 'Bakong payment is not configured yet.' });
@@ -284,7 +383,9 @@ app.post('/api/orders', async (req, res) => {
 
   const story = storyById(String(req.body?.storyId || ''));
   if (!story || placementOf(story) !== 'web') return res.status(404).json({ error: 'Story not found' });
-  if (!story.full_video_url) return res.status(409).json({ error: 'រឿងនេះមិនទាន់មានវីដេអូពេញសម្រាប់ទិញទេ។' });
+  if (!story.full_video_file_id && !story.full_video_url) {
+    return res.status(409).json({ error: 'រឿងនេះមិនទាន់មានវីដេអូពេញសម្រាប់ទិញទេ។' });
+  }
 
   const order = {
     id: safeOrderId(story.id),
@@ -368,7 +469,7 @@ app.get('/api/access', (req, res) => {
   if (!payload) return res.status(401).json({ error: 'Access link is invalid or expired.' });
 
   const story = storyById(payload.storyId);
-  if (!story) return res.status(404).json({ error: 'Story not found' });
+  if (!story || placementOf(story) !== 'web') return res.status(404).json({ error: 'Story not found' });
 
   res.set('Cache-Control', 'private, no-store');
   res.json({
@@ -383,24 +484,13 @@ app.get('/api/video/:id', async (req, res) => {
   if (!payload || payload.storyId !== req.params.id) return res.status(401).send('Unauthorized');
 
   const story = storyById(req.params.id);
-  if (!story?.full_video_url) return res.status(404).send('Video not configured');
+  if (!story || placementOf(story) !== 'web') return res.status(404).send('Video not configured');
 
   try {
-    const headers = {};
-    if (req.headers.range) headers.Range = req.headers.range;
-    const upstream = await fetch(story.full_video_url, { headers });
-    if (!upstream.ok && upstream.status !== 206) return res.status(502).send('Video source unavailable');
-
-    res.status(upstream.status);
-    for (const name of ['content-type', 'content-length', 'content-range', 'accept-ranges']) {
-      const value = upstream.headers.get(name);
-      if (value) res.setHeader(name, value);
-    }
-    res.setHeader('Cache-Control', 'private, no-store');
-    res.setHeader('Content-Disposition', 'inline');
-
-    if (upstream.body) Readable.fromWeb(upstream.body).pipe(res);
-    else res.end();
+    let sourceUrl = story.full_video_url || '';
+    if (story.full_video_file_id) sourceUrl = await telegramFileUrl(story.full_video_file_id);
+    if (!sourceUrl) return res.status(404).send('Video not configured');
+    await proxyRemoteMedia(req, res, sourceUrl);
   } catch (error) {
     console.error('[video-proxy]', error.message);
     if (!res.headersSent) res.status(500).send('Video unavailable');
@@ -412,6 +502,28 @@ app.get('/api/admin/stories', adminAuth, (_req, res) => {
   res.json({ stories: loadStories() });
 });
 
+app.post('/api/admin/upload', adminAuth, mediaUpload.single('file'), async (req, res) => {
+  const kind = String(req.body?.kind || '').trim();
+  if (!['cover', 'trailer', 'full'].includes(kind)) {
+    return res.status(400).json({ error: 'Upload type is invalid.' });
+  }
+  if (!req.file) return res.status(400).json({ error: 'សូមជ្រើស File មុន។' });
+  if (kind === 'cover' && !req.file.mimetype.startsWith('image/')) {
+    return res.status(400).json({ error: 'Cover ត្រូវជា Image File។' });
+  }
+  if (kind !== 'cover' && !req.file.mimetype.startsWith('video/')) {
+    return res.status(400).json({ error: 'Trailer/Full ត្រូវជា Video File។' });
+  }
+
+  try {
+    const uploaded = await sendTelegramUpload(req.file, kind);
+    res.json({ ok: true, kind, fileId: uploaded.fileId, messageId: uploaded.messageId });
+  } catch (error) {
+    console.error('[admin-telegram-upload]', error.message);
+    res.status(502).json({ error: error.message });
+  }
+});
+
 app.post('/api/admin/stories', adminAuth, async (req, res) => {
   const input = req.body || {};
   const id = String(input.id || '').trim();
@@ -419,6 +531,9 @@ app.post('/api/admin/stories', adminAuth, async (req, res) => {
   const preview = String(input.preview || '').trim();
   const price = Number(input.price_khr);
   const placement = String(input.placement || 'web').trim() === 'telegram' ? 'telegram' : 'web';
+  const coverFileId = String(input.cover_file_id || '').trim();
+  const trailerFileId = String(input.preview_video_file_id || '').trim();
+  const fullFileId = String(input.full_video_file_id || '').trim();
   const coverUrl = String(input.cover_url || '').trim();
   const trailerUrl = String(input.preview_video_url || '').trim();
   const fullUrl = String(input.full_video_url || '').trim();
@@ -427,7 +542,7 @@ app.post('/api/admin/stories', adminAuth, async (req, res) => {
   if (!title) return res.status(400).json({ error: 'Title is required.' });
   if (!Number.isFinite(price) || price < 0) return res.status(400).json({ error: 'Price is invalid.' });
   if (![coverUrl, trailerUrl, fullUrl, telegramUrl].every(validHttpUrl)) {
-    return res.status(400).json({ error: 'Cover/Video/Telegram URLs must use http or https.' });
+    return res.status(400).json({ error: 'Legacy/Telegram URLs must use http or https.' });
   }
   if (placement === 'telegram' && telegramUrl && !/^https?:\/\/(t\.me|telegram\.me)\//i.test(telegramUrl)) {
     return res.status(400).json({ error: 'Telegram link must use t.me or telegram.me.' });
@@ -445,8 +560,11 @@ app.post('/api/admin/stories', adminAuth, async (req, res) => {
       preview,
       price_khr: price,
       placement,
-      cover_url: coverUrl,
-      preview_video_url: trailerUrl,
+      cover_file_id: placement === 'web' ? coverFileId : '',
+      preview_video_file_id: placement === 'web' ? trailerFileId : '',
+      full_video_file_id: placement === 'web' ? fullFileId : '',
+      cover_url: placement === 'web' ? coverUrl : '',
+      preview_video_url: placement === 'web' ? trailerUrl : '',
       full_video_url: placement === 'web' ? fullUrl : '',
       telegram_url: placement === 'telegram' ? telegramUrl : '',
       updated_at: new Date().toISOString()
@@ -459,8 +577,11 @@ app.post('/api/admin/stories', adminAuth, async (req, res) => {
       preview,
       price_khr: price,
       placement,
-      cover_url: coverUrl,
-      preview_video_url: trailerUrl,
+      cover_file_id: placement === 'web' ? coverFileId : '',
+      preview_video_file_id: placement === 'web' ? trailerFileId : '',
+      full_video_file_id: placement === 'web' ? fullFileId : '',
+      cover_url: placement === 'web' ? coverUrl : '',
+      preview_video_url: placement === 'web' ? trailerUrl : '',
       full_video_url: placement === 'web' ? fullUrl : '',
       telegram_url: placement === 'telegram' ? telegramUrl : '',
       created_at: new Date().toISOString()
@@ -493,12 +614,25 @@ app.delete('/api/admin/stories/:id', adminAuth, async (req, res) => {
 });
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'idramaai', brand: BRAND_NAME });
+  res.json({
+    ok: true,
+    service: 'idramaai',
+    brand: BRAND_NAME,
+    telegramUploads: Boolean(BOT_TOKEN && TELEGRAM_STORAGE_CHAT_ID)
+  });
 });
 
 app.get('*', (req, res, next) => {
   if (req.path.startsWith('/api/')) return next();
   res.sendFile(path.join(publicPath, 'index.html'));
+});
+
+app.use((err, _req, res, _next) => {
+  if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ error: 'File ធំពេកសម្រាប់ Upload តាម Bot។ សូមបន្ថយទំហំ ឬដាក់រឿងវែងក្នុង Telegram។' });
+  }
+  console.error('[server]', err);
+  res.status(500).json({ error: 'Server error.' });
 });
 
 app.listen(PORT, () => console.log(`[web] ${BRAND_NAME} listening on ${PORT}`));
