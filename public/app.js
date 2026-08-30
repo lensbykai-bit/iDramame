@@ -1,5 +1,5 @@
 const $ = (q, root=document) => root.querySelector(q);
-const BRAND_NAME = 'ខ្ញុំចង់មើលរឿងអេអាយ';
+const BRAND_NAME = 'iDramaAi';
 const modal = $('#modal');
 const modalBody = $('#modalBody');
 let stories = [];
