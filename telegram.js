@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { Telegraf, Markup } = require('telegraf');
 
-const BRAND_NAME = 'ខ្ញុំចង់មើលរឿងអេអាយ';
+const BRAND_NAME = process.env.BRAND_NAME || 'iDramaAi';
 const BOT_TOKEN = process.env.BOT_TOKEN || '';
 const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || 'https://idramame.onrender.com').replace(/\/$/, '');
 const storiesPath = path.join(__dirname, 'stories.json');
