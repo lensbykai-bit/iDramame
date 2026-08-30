@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/brand.css" />
   <link rel="stylesheet" href="/store.css" />
+  <link rel="stylesheet" href="/account.css" />
 </head>
 <body>
   <div class="glow glow-a"></div><div class="glow glow-b"></div>
@@ -25,7 +26,10 @@
       <a href="#library">រឿងដែលបានទិញ</a>
     </nav>
 
-    <span class="country-pill">🇰🇭 សម្រាប់កម្ពុជា</span>
+    <div class="top-actions">
+      <span class="country-pill">🇰🇭 កម្ពុជា</span>
+      <button id="accountBtn" class="account-btn" type="button">👤 ចូល / ចុះឈ្មោះ</button>
+    </div>
   </header>
 
   <main>
@@ -33,25 +37,25 @@
       <div class="hero-badge">🎬 SHORT DRAMA STORE • BAKONG KHQR</div>
       <div class="eyebrow">IDRAMAAI • WATCH ONLINE</div>
       <h1>ទិញរឿងខ្លីដែលអ្នកចូលចិត្ត<br><span>បង់ Bakong រួច មើលភ្លាម</span></h1>
-      <p>ជ្រើសរឿង → មើល Trailer → Scan Bakong KHQR → Website ផ្ទៀងផ្ទាត់ការបង់ → បើករឿងពេញនៅ Watch Page ដោយស្វ័យប្រវត្តិ។</p>
+      <p>ជ្រើសរឿង → មើល Trailer → Scan Bakong KHQR → Website ផ្ទៀងផ្ទាត់ការបង់ → រឿងចូល My Library និងបើកមើលបានដោយស្វ័យប្រវត្តិ។</p>
 
       <div class="hero-actions">
         <a class="primary-btn" href="#stories">🎬 មើលរឿងខ្លី</a>
-        <a class="secondary-btn" href="#library">📚 រឿងដែលបានទិញ</a>
+        <a class="secondary-btn" href="#library">📚 My Library</a>
       </div>
 
       <div class="trust-row">
         <span>🇰🇭 Bakong KHQR</span>
         <span>⚡ Auto Verify</span>
-        <span>🔐 Unlock ក្រោយបង់</span>
+        <span>🔐 Account Library</span>
         <span>▶️ Watch Online</span>
       </div>
 
       <div class="step-row">
         <div class="step-card"><div>①</div><strong>ជ្រើសរឿង</strong><span>មើល Cover, Preview និងតម្លៃ</span></div>
-        <div class="step-card"><div>②</div><strong>មើល Trailer</strong><span>មើលខ្លីៗមុនសម្រេចចិត្តទិញ</span></div>
-        <div class="step-card"><div>③</div><strong>បង់ KHQR</strong><span>Scan QR តាម Bakong/ធនាគារដែលគាំទ្រ</span></div>
-        <div class="step-card"><div>④</div><strong>មើលរឿងពេញ</strong><span>បង់ជោគជ័យ Website បើកឱ្យភ្លាម</span></div>
+        <div class="step-card"><div>②</div><strong>Login</strong><span>រក្សាការទិញជាប់ Account</span></div>
+        <div class="step-card"><div>③</div><strong>បង់ KHQR</strong><span>Scan តាម Bakong/ធនាគារដែលគាំទ្រ</span></div>
+        <div class="step-card"><div>④</div><strong>មើលរឿងពេញ</strong><span>បង់ជោគជ័យ បើកឱ្យភ្លាម</span></div>
       </div>
     </section>
 
@@ -75,7 +79,7 @@
     <section id="library" class="section library-section">
       <div class="section-head">
         <div><div class="eyebrow">MY LIBRARY</div><h2>រឿងដែលបានទិញ</h2></div>
-        <span class="muted">រក្សាទុកលើ Browser នេះ</span>
+        <span id="libraryMeta" class="muted">ត្រូវ Login ដើម្បីមើល</span>
       </div>
       <div id="libraryGrid" class="library-grid"></div>
     </section>
@@ -83,8 +87,8 @@
     <section class="security-card">
       <div class="security-icon">🔐</div>
       <div>
-        <h3>Bakong KHQR + Auto Unlock</h3>
-        <p>Trailer អាចមើលមុនបាន។ រឿងពេញនឹងបើកតែក្រោយ Server ផ្ទៀងផ្ទាត់ Amount, Currency និងគណនីទទួលការទូទាត់បានត្រឹមត្រូវប៉ុណ្ណោះ។</p>
+        <h3>Bakong KHQR + Auto Unlock + Account Library</h3>
+        <p>រឿងពេញនឹងបើកតែក្រោយ Server ផ្ទៀងផ្ទាត់ Amount, Currency និងគណនីទទួលបានត្រឹមត្រូវ។ ការទិញត្រូវបានរក្សាទុកក្នុង Account Library ដើម្បីអាចចូលមើលពីឧបករណ៍ផ្សេងបាន។</p>
       </div>
     </section>
   </main>
@@ -93,12 +97,13 @@
 
   <div id="modal" class="modal" aria-hidden="true">
     <div class="modal-backdrop" data-close></div>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Story checkout">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="iDramaAi dialog">
       <button class="close-btn" data-close aria-label="Close">×</button>
       <div id="modalBody"></div>
     </div>
   </div>
 
+  <script src="/supabase-config.js"></script>
   <script src="/app.js" defer></script>
 </body>
 </html>
