@@ -10,8 +10,12 @@ const QRCode = require('qrcode');
 const { BakongKHQR, khqrData, IndividualInfo } = require('bakong-khqr');
 
 const BRAND_NAME = process.env.BRAND_NAME || 'iDramaAi';
+
+// Telegram is used only as a private media-storage backend.
+// The customer-facing product is Web Only.
 const BOT_TOKEN = process.env.BOT_TOKEN || '';
 const TELEGRAM_STORAGE_CHAT_ID = process.env.TELEGRAM_STORAGE_CHAT_ID || process.env.ADMIN_TELEGRAM_ID || '';
+
 const BAKONG_ACCOUNT_ID = process.env.BAKONG_ACCOUNT_ID || '';
 const BAKONG_MERCHANT_NAME = process.env.BAKONG_MERCHANT_NAME || 'iDramaAi';
 const BAKONG_MERCHANT_CITY = process.env.BAKONG_MERCHANT_CITY || 'PHNOM PENH';
@@ -20,6 +24,7 @@ const BAKONG_STORE_LABEL = process.env.BAKONG_STORE_LABEL || 'iDramaAi';
 const BAKONG_API_BASE_URL = (process.env.BAKONG_API_BASE_URL || 'https://api-bakong.nbc.gov.kh').replace(/\/$/, '');
 const BAKONG_TOKEN = process.env.BAKONG_TOKEN || '';
 const BAKONG_TEST_MODE = /^true$/i.test(String(process.env.BAKONG_TEST_MODE || 'false').trim());
+
 const ACCESS_TOKEN_SECRET = process.env.ACCESS_TOKEN_SECRET || crypto.randomBytes(32).toString('hex');
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
@@ -31,6 +36,7 @@ const storiesPath = path.join(__dirname, 'stories.json');
 const storePath = path.join(__dirname, 'data', 'store.json');
 const publicPath = path.join(__dirname, 'public');
 const telegramApiBase = BOT_TOKEN ? `https://api.telegram.org/bot${BOT_TOKEN}` : '';
+
 const mediaUpload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 45 * 1024 * 1024 }
@@ -38,39 +44,41 @@ const mediaUpload = multer({
 
 if (!BAKONG_TEST_MODE && !BAKONG_ACCOUNT_ID) console.warn('[config] BAKONG_ACCOUNT_ID is missing. Checkout will be disabled.');
 if (!BAKONG_TEST_MODE && !BAKONG_TOKEN) console.warn('[config] BAKONG_TOKEN is missing. Payment verification will be disabled.');
-if (BAKONG_TEST_MODE) console.warn('[config] BAKONG_TEST_MODE=true. No real Bakong payment will be required; disable this after testing.');
-if (!process.env.ACCESS_TOKEN_SECRET) console.warn('[config] ACCESS_TOKEN_SECRET is missing. Set one in Render so watch links survive restarts.');
+if (BAKONG_TEST_MODE) console.warn('[config] BAKONG_TEST_MODE=true. Disable it before accepting real payments.');
+if (!process.env.ACCESS_TOKEN_SECRET) console.warn('[config] ACCESS_TOKEN_SECRET is missing. Watch links may stop working after restart.');
 if (!ADMIN_PASSWORD) console.warn('[config] ADMIN_PASSWORD is missing. Web admin will be disabled.');
-if (!GITHUB_TOKEN) console.warn('[config] GITHUB_TOKEN is missing. Admin story changes will not persist across redeploys.');
-if (!BOT_TOKEN) console.warn('[config] BOT_TOKEN is missing. Telegram media storage is disabled.');
-if (!TELEGRAM_STORAGE_CHAT_ID) console.warn('[config] TELEGRAM_STORAGE_CHAT_ID is missing. Admin file uploads are disabled. Use /myid in the bot to get your chat ID.');
+if (!GITHUB_TOKEN) console.warn('[config] GITHUB_TOKEN is missing. Story changes will not persist across redeploys.');
+if (!BOT_TOKEN || !TELEGRAM_STORAGE_CHAT_ID) console.warn('[config] Private media storage is not fully configured.');
+
+function normalizeStory(story) {
+  return {
+    ...story,
+    placement: 'web',
+    telegram_url: ''
+  };
+}
 
 function loadStories() {
   try {
     const parsed = JSON.parse(fs.readFileSync(storiesPath, 'utf8'));
-    return Array.isArray(parsed) ? parsed : [];
+    return Array.isArray(parsed) ? parsed.map(normalizeStory) : [];
   } catch {
     return [];
   }
 }
 
 function saveStoriesLocal(stories) {
-  fs.writeFileSync(storiesPath, JSON.stringify(stories, null, 2) + '\n');
-}
-
-function placementOf(story) {
-  return story?.placement === 'telegram' ? 'telegram' : 'web';
-}
-
-function webStories() {
-  return loadStories().filter((story) => placementOf(story) === 'web');
+  fs.writeFileSync(
+    storiesPath,
+    JSON.stringify(stories.map(normalizeStory), null, 2) + '\n'
+  );
 }
 
 function storyById(id) {
   return loadStories().find((story) => story.id === id);
 }
 
-function telegramMediaPath(fileId) {
+function mediaPath(fileId) {
   return fileId ? `/api/media/${encodeURIComponent(fileId)}` : '';
 }
 
@@ -80,9 +88,9 @@ function publicStory(story) {
     title: story.title,
     preview: story.preview || '',
     price_khr: Number(story.price_khr || 0),
-    placement: placementOf(story),
-    cover_url: telegramMediaPath(story.cover_file_id) || story.cover_url || '',
-    preview_video_url: telegramMediaPath(story.preview_video_file_id) || story.preview_video_url || ''
+    placement: 'web',
+    cover_url: mediaPath(story.cover_file_id) || story.cover_url || '',
+    preview_video_url: mediaPath(story.preview_video_file_id) || story.preview_video_url || ''
   };
 }
 
@@ -135,12 +143,15 @@ function safeEqual(a, b) {
 
 function adminAuth(req, res, next) {
   if (!ADMIN_PASSWORD) return res.status(503).json({ error: 'ADMIN_PASSWORD is not configured.' });
-  if (!safeEqual(req.get('x-admin-password'), ADMIN_PASSWORD)) return res.status(401).json({ error: 'Password is incorrect.' });
+  if (!safeEqual(req.get('x-admin-password'), ADMIN_PASSWORD)) {
+    return res.status(401).json({ error: 'Password is incorrect.' });
+  }
   next();
 }
 
 async function persistStories(stories, message) {
-  saveStoriesLocal(stories);
+  const normalized = stories.map(normalizeStory);
+  saveStoriesLocal(normalized);
   if (!GITHUB_TOKEN) return { persistedToGitHub: false };
 
   const api = `https://api.github.com/repos/${GITHUB_REPO}/contents/stories.json`;
@@ -160,7 +171,7 @@ async function persistStories(stories, message) {
     headers: { ...headers, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       message,
-      content: Buffer.from(JSON.stringify(stories, null, 2) + '\n').toString('base64'),
+      content: Buffer.from(JSON.stringify(normalized, null, 2) + '\n').toString('base64'),
       sha: currentBody.sha,
       branch: GITHUB_BRANCH
     })
@@ -175,27 +186,33 @@ async function persistStories(stories, message) {
 }
 
 async function telegramFileUrl(fileId) {
-  if (!BOT_TOKEN) throw new Error('BOT_TOKEN is not configured.');
+  if (!BOT_TOKEN) throw new Error('Private media storage is not configured.');
   const response = await fetch(`${telegramApiBase}/getFile?file_id=${encodeURIComponent(fileId)}`);
   const body = await response.json().catch(() => ({}));
   if (!response.ok || !body.ok || !body.result?.file_path) {
-    throw new Error(body.description || 'Telegram getFile failed.');
+    throw new Error(body.description || 'Media lookup failed.');
   }
   return `https://api.telegram.org/file/bot${BOT_TOKEN}/${body.result.file_path}`;
 }
 
-async function sendTelegramUpload(file, kind) {
-  if (!BOT_TOKEN) throw new Error('BOT_TOKEN is not configured.');
-  if (!TELEGRAM_STORAGE_CHAT_ID) throw new Error('TELEGRAM_STORAGE_CHAT_ID is not configured.');
+async function sendPrivateMediaUpload(file, kind) {
+  if (!BOT_TOKEN || !TELEGRAM_STORAGE_CHAT_ID) {
+    throw new Error('Media storage is not configured.');
+  }
 
   const isCover = kind === 'cover';
   const method = isCover ? 'sendPhoto' : 'sendVideo';
   const field = isCover ? 'photo' : 'video';
+
   const form = new FormData();
   form.append('chat_id', TELEGRAM_STORAGE_CHAT_ID);
-  form.append('caption', `iDramaAi • ${kind} upload`);
+  form.append('caption', `iDramaAi • private ${kind} storage`);
   if (!isCover) form.append('supports_streaming', 'true');
-  form.append(field, new Blob([file.buffer], { type: file.mimetype || 'application/octet-stream' }), file.originalname || `${kind}.bin`);
+  form.append(
+    field,
+    new Blob([file.buffer], { type: file.mimetype || 'application/octet-stream' }),
+    file.originalname || `${kind}.bin`
+  );
 
   let response = await fetch(`${telegramApiBase}/${method}`, { method: 'POST', body: form });
   let body = await response.json().catch(() => ({}));
@@ -203,31 +220,36 @@ async function sendTelegramUpload(file, kind) {
   if ((!response.ok || !body.ok) && !isCover) {
     const fallback = new FormData();
     fallback.append('chat_id', TELEGRAM_STORAGE_CHAT_ID);
-    fallback.append('caption', `iDramaAi • ${kind} upload`);
-    fallback.append('document', new Blob([file.buffer], { type: file.mimetype || 'application/octet-stream' }), file.originalname || `${kind}.bin`);
+    fallback.append('caption', `iDramaAi • private ${kind} storage`);
+    fallback.append(
+      'document',
+      new Blob([file.buffer], { type: file.mimetype || 'application/octet-stream' }),
+      file.originalname || `${kind}.bin`
+    );
     response = await fetch(`${telegramApiBase}/sendDocument`, { method: 'POST', body: fallback });
     body = await response.json().catch(() => ({}));
   }
 
   if (!response.ok || !body.ok || !body.result) {
-    throw new Error(body.description || 'Telegram upload failed.');
+    throw new Error(body.description || 'Media upload failed.');
   }
 
   if (isCover) {
     const photos = body.result.photo || [];
     const selected = photos[photos.length - 1];
-    if (!selected?.file_id) throw new Error('Telegram did not return a photo file ID.');
+    if (!selected?.file_id) throw new Error('Media storage did not return a photo file ID.');
     return { fileId: selected.file_id, messageId: body.result.message_id };
   }
 
   const media = body.result.video || body.result.document;
-  if (!media?.file_id) throw new Error('Telegram did not return a video file ID.');
+  if (!media?.file_id) throw new Error('Media storage did not return a video file ID.');
   return { fileId: media.file_id, messageId: body.result.message_id };
 }
 
 async function proxyRemoteMedia(req, res, sourceUrl) {
   const headers = {};
   if (req.headers.range) headers.Range = req.headers.range;
+
   const upstream = await fetch(sourceUrl, { headers });
   if (!upstream.ok && upstream.status !== 206) {
     return res.status(502).send('Media source unavailable');
@@ -238,6 +260,7 @@ async function proxyRemoteMedia(req, res, sourceUrl) {
     const value = upstream.headers.get(name);
     if (value) res.setHeader(name, value);
   }
+
   res.setHeader('Cache-Control', 'private, max-age=300');
   res.setHeader('Content-Disposition', 'inline');
 
@@ -281,6 +304,7 @@ function generateKHQR(order) {
   if (!response || response.status?.code !== 0 || !response.data?.qr || !response.data?.md5) {
     throw new Error(response?.status?.message || 'KHQR generation failed');
   }
+
   return { ...response.data, expiresAt: expirationTimestamp };
 }
 
@@ -293,15 +317,22 @@ async function checkPayment(md5) {
     },
     body: JSON.stringify({ md5 })
   });
+
   const body = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(`Bakong API ${response.status}: ${body.responseMessage || 'request failed'}`);
+  if (!response.ok) {
+    throw new Error(`Bakong API ${response.status}: ${body.responseMessage || 'request failed'}`);
+  }
   return body;
 }
 
 function verifyPaymentMatchesOrder(payment, order) {
   if (!payment || payment.responseCode !== 0 || !payment.data) return false;
+
+  const currency = String(payment.data.currency || '').toUpperCase();
+  const currencyMatches = currency === 'KHR' || currency === '116';
+
   return (
-    String(payment.data.currency || '').toUpperCase() === 'KHR' &&
+    currencyMatches &&
     Number(payment.data.amount) === Number(order.amount) &&
     String(payment.data.toAccountId || '').toLowerCase() === BAKONG_ACCOUNT_ID.toLowerCase()
   );
@@ -321,8 +352,10 @@ function verifyAccess(token) {
   try {
     const [body, sig] = String(token || '').split('.');
     if (!body || !sig) return null;
+
     const expected = crypto.createHmac('sha256', ACCESS_TOKEN_SECRET).update(body).digest('base64url');
     if (!safeEqual(sig, expected)) return null;
+
     const payload = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
     if (!payload.exp || Date.now() > payload.exp) return null;
     return payload;
@@ -344,6 +377,7 @@ function markOrderPaid(store, order, transactionHash, testMode = false) {
   order.paidAt = new Date().toISOString();
   order.transactionHash = transactionHash || '';
   order.testMode = Boolean(testMode);
+
   store.orders[order.id] = order;
   store.purchases[order.id] = {
     storyId: order.storyId,
@@ -358,30 +392,33 @@ function markOrderPaid(store, order, transactionHash, testMode = false) {
 const app = express();
 app.disable('x-powered-by');
 app.use(express.json({ limit: '64kb' }));
+
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'same-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   next();
 });
+
 app.use(express.static(publicPath, { etag: true, maxAge: '1h' }));
 
 app.get('/api/meta', (_req, res) => {
   res.json({
     brand: BRAND_NAME,
+    mode: 'web-only',
     checkout: BAKONG_TEST_MODE || Boolean(BAKONG_ACCOUNT_ID && BAKONG_TOKEN),
     testMode: BAKONG_TEST_MODE,
-    telegramUploads: Boolean(BOT_TOKEN && TELEGRAM_STORAGE_CHAT_ID)
+    mediaUploads: Boolean(BOT_TOKEN && TELEGRAM_STORAGE_CHAT_ID)
   });
 });
 
 app.get('/api/stories', (_req, res) => {
-  res.json({ stories: webStories().map(publicStory) });
+  res.json({ stories: loadStories().map(publicStory) });
 });
 
 app.get('/api/stories/:id', (req, res) => {
   const story = storyById(req.params.id);
-  if (!story || placementOf(story) !== 'web') return res.status(404).json({ error: 'Story not found' });
+  if (!story) return res.status(404).json({ error: 'Story not found' });
   res.json({ story: publicStory(story) });
 });
 
@@ -390,8 +427,8 @@ app.get('/api/media/:fileId', async (req, res) => {
     const sourceUrl = await telegramFileUrl(req.params.fileId);
     await proxyRemoteMedia(req, res, sourceUrl);
   } catch (error) {
-    console.error('[telegram-media]', error.message);
-    if (!res.headersSent) res.status(502).send('Telegram media unavailable');
+    console.error('[media]', error.message);
+    if (!res.headersSent) res.status(502).send('Media unavailable');
   }
 });
 
@@ -401,9 +438,10 @@ app.post('/api/orders', async (req, res) => {
   }
 
   const story = storyById(String(req.body?.storyId || ''));
-  if (!story || placementOf(story) !== 'web') return res.status(404).json({ error: 'Story not found' });
+  if (!story) return res.status(404).json({ error: 'Story not found' });
+
   if (!story.full_video_file_id && !story.full_video_url) {
-    return res.status(409).json({ error: 'រឿងនេះមិនទាន់មានវីដេអូពេញសម្រាប់ទិញទេ។' });
+    return res.status(409).json({ error: 'រឿងនេះមិនទាន់មាន Full Movie សម្រាប់ទិញទេ។' });
   }
 
   const order = {
@@ -450,7 +488,7 @@ app.post('/api/orders', async (req, res) => {
       errorCorrectionLevel: 'M'
     });
 
-    res.json({
+    return res.json({
       orderId: order.id,
       title: order.title,
       amount: order.amount,
@@ -461,7 +499,9 @@ app.post('/api/orders', async (req, res) => {
     });
   } catch (error) {
     console.error('[order]', error.message);
-    res.status(500).json({ error: BAKONG_TEST_MODE ? 'មិនអាចបង្កើត Test Order បាន។' : 'មិនអាចបង្កើត Bakong KHQR បាន។' });
+    return res.status(500).json({
+      error: BAKONG_TEST_MODE ? 'មិនអាចបង្កើត Test Order បាន។' : 'មិនអាចបង្កើត Bakong KHQR បាន។'
+    });
   }
 });
 
@@ -489,18 +529,20 @@ app.post('/api/orders/:id/check', async (req, res) => {
 
   try {
     const payment = await checkPayment(order.md5);
-    if (!verifyPaymentMatchesOrder(payment, order)) return res.json({ paid: false, testMode: false });
+    if (!verifyPaymentMatchesOrder(payment, order)) {
+      return res.json({ paid: false, testMode: false });
+    }
 
     markOrderPaid(store, order, payment.data.hash || '', false);
 
-    res.json({
+    return res.json({
       paid: true,
       testMode: false,
       watchUrl: `/watch.html?token=${encodeURIComponent(createWatchToken(order))}`
     });
   } catch (error) {
     console.error('[payment-check]', error.message);
-    res.status(502).json({ error: 'មិនអាចពិនិត្យ Bakong បាននៅពេលនេះ។' });
+    return res.status(502).json({ error: 'មិនអាចពិនិត្យ Bakong បាននៅពេលនេះ។' });
   }
 });
 
@@ -509,10 +551,10 @@ app.get('/api/access', (req, res) => {
   if (!payload) return res.status(401).json({ error: 'Access link is invalid or expired.' });
 
   const story = storyById(payload.storyId);
-  if (!story || placementOf(story) !== 'web') return res.status(404).json({ error: 'Story not found' });
+  if (!story) return res.status(404).json({ error: 'Story not found' });
 
   res.set('Cache-Control', 'private, no-store');
-  res.json({
+  return res.json({
     story: { id: story.id, title: story.title },
     orderId: payload.orderId,
     videoUrl: `/api/video/${encodeURIComponent(story.id)}?token=${encodeURIComponent(req.query.token)}`
@@ -521,16 +563,18 @@ app.get('/api/access', (req, res) => {
 
 app.get('/api/video/:id', async (req, res) => {
   const payload = verifyAccess(req.query.token);
-  if (!payload || payload.storyId !== req.params.id) return res.status(401).send('Unauthorized');
+  if (!payload || payload.storyId !== req.params.id) {
+    return res.status(401).send('Unauthorized');
+  }
 
   const story = storyById(req.params.id);
-  if (!story || placementOf(story) !== 'web') return res.status(404).send('Video not configured');
+  if (!story) return res.status(404).send('Video not configured');
 
   try {
     let sourceUrl = story.full_video_url || '';
     if (story.full_video_file_id) sourceUrl = await telegramFileUrl(story.full_video_file_id);
     if (!sourceUrl) return res.status(404).send('Video not configured');
-    await proxyRemoteMedia(req, res, sourceUrl);
+    return await proxyRemoteMedia(req, res, sourceUrl);
   } catch (error) {
     console.error('[video-proxy]', error.message);
     if (!res.headersSent) res.status(500).send('Video unavailable');
@@ -544,23 +588,30 @@ app.get('/api/admin/stories', adminAuth, (_req, res) => {
 
 app.post('/api/admin/upload', adminAuth, mediaUpload.single('file'), async (req, res) => {
   const kind = String(req.body?.kind || '').trim();
+
   if (!['cover', 'trailer', 'full'].includes(kind)) {
     return res.status(400).json({ error: 'Upload type is invalid.' });
   }
   if (!req.file) return res.status(400).json({ error: 'សូមជ្រើស File មុន។' });
+
   if (kind === 'cover' && !req.file.mimetype.startsWith('image/')) {
     return res.status(400).json({ error: 'Cover ត្រូវជា Image File។' });
   }
   if (kind !== 'cover' && !req.file.mimetype.startsWith('video/')) {
-    return res.status(400).json({ error: 'Trailer/Full ត្រូវជា Video File។' });
+    return res.status(400).json({ error: 'Trailer/Full Movie ត្រូវជា Video File។' });
   }
 
   try {
-    const uploaded = await sendTelegramUpload(req.file, kind);
-    res.json({ ok: true, kind, fileId: uploaded.fileId, messageId: uploaded.messageId });
+    const uploaded = await sendPrivateMediaUpload(req.file, kind);
+    return res.json({
+      ok: true,
+      kind,
+      fileId: uploaded.fileId,
+      messageId: uploaded.messageId
+    });
   } catch (error) {
-    console.error('[admin-telegram-upload]', error.message);
-    res.status(502).json({ error: error.message });
+    console.error('[admin-media-upload]', error.message);
+    return res.status(502).json({ error: error.message });
   }
 });
 
@@ -570,22 +621,19 @@ app.post('/api/admin/stories', adminAuth, async (req, res) => {
   const title = String(input.title || '').trim();
   const preview = String(input.preview || '').trim();
   const price = Number(input.price_khr);
-  const placement = String(input.placement || 'web').trim() === 'telegram' ? 'telegram' : 'web';
   const coverFileId = String(input.cover_file_id || '').trim();
   const trailerFileId = String(input.preview_video_file_id || '').trim();
   const fullFileId = String(input.full_video_file_id || '').trim();
   const coverUrl = String(input.cover_url || '').trim();
   const trailerUrl = String(input.preview_video_url || '').trim();
   const fullUrl = String(input.full_video_url || '').trim();
-  const telegramUrl = String(input.telegram_url || '').trim();
 
   if (!title) return res.status(400).json({ error: 'Title is required.' });
-  if (!Number.isFinite(price) || price < 0) return res.status(400).json({ error: 'Price is invalid.' });
-  if (![coverUrl, trailerUrl, fullUrl, telegramUrl].every(validHttpUrl)) {
-    return res.status(400).json({ error: 'Legacy/Telegram URLs must use http or https.' });
+  if (!Number.isFinite(price) || price < 0) {
+    return res.status(400).json({ error: 'Price is invalid.' });
   }
-  if (placement === 'telegram' && telegramUrl && !/^https?:\/\/(t\.me|telegram\.me)\//i.test(telegramUrl)) {
-    return res.status(400).json({ error: 'Telegram link must use t.me or telegram.me.' });
+  if (![coverUrl, trailerUrl, fullUrl].every(validHttpUrl)) {
+    return res.status(400).json({ error: 'Media URLs must use http or https.' });
   }
 
   const stories = loadStories();
@@ -594,47 +642,44 @@ app.post('/api/admin/stories', adminAuth, async (req, res) => {
   if (id) {
     const index = stories.findIndex((item) => item.id === id);
     if (index < 0) return res.status(404).json({ error: 'Story not found.' });
-    story = {
+
+    story = normalizeStory({
       ...stories[index],
       title,
       preview,
       price_khr: price,
-      placement,
       cover_file_id: coverFileId,
       preview_video_file_id: trailerFileId,
       full_video_file_id: fullFileId,
-      cover_url: placement === 'web' ? coverUrl : '',
-      preview_video_url: placement === 'web' ? trailerUrl : '',
-      full_video_url: placement === 'web' ? fullUrl : '',
-      telegram_url: placement === 'telegram' ? telegramUrl : '',
+      cover_url: coverUrl,
+      preview_video_url: trailerUrl,
+      full_video_url: fullUrl,
       updated_at: new Date().toISOString()
-    };
+    });
     stories[index] = story;
   } else {
-    story = {
+    story = normalizeStory({
       id: slugify(title),
       title,
       preview,
       price_khr: price,
-      placement,
       cover_file_id: coverFileId,
       preview_video_file_id: trailerFileId,
       full_video_file_id: fullFileId,
-      cover_url: placement === 'web' ? coverUrl : '',
-      preview_video_url: placement === 'web' ? trailerUrl : '',
-      full_video_url: placement === 'web' ? fullUrl : '',
-      telegram_url: placement === 'telegram' ? telegramUrl : '',
+      cover_url: coverUrl,
+      preview_video_url: trailerUrl,
+      full_video_url: fullUrl,
       created_at: new Date().toISOString()
-    };
+    });
     stories.unshift(story);
   }
 
   try {
-    const result = await persistStories(stories, `${id ? 'Update' : 'Add'} ${placement} story: ${title}`);
-    res.json({ ok: true, story, ...result });
+    const result = await persistStories(stories, `${id ? 'Update' : 'Add'} web story: ${title}`);
+    return res.json({ ok: true, story, ...result });
   } catch (error) {
     console.error('[admin-save]', error.message);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -645,11 +690,11 @@ app.delete('/api/admin/stories/:id', adminAuth, async (req, res) => {
 
   const nextStories = stories.filter((item) => item.id !== req.params.id);
   try {
-    const result = await persistStories(nextStories, `Delete story: ${story.title}`);
-    res.json({ ok: true, ...result });
+    const result = await persistStories(nextStories, `Delete web story: ${story.title}`);
+    return res.json({ ok: true, ...result });
   } catch (error) {
     console.error('[admin-delete]', error.message);
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: error.message });
   }
 });
 
@@ -657,9 +702,10 @@ app.get('/health', (_req, res) => {
   res.json({
     ok: true,
     service: 'idramaai',
+    mode: 'web-only',
     brand: BRAND_NAME,
     bakongTestMode: BAKONG_TEST_MODE,
-    telegramUploads: Boolean(BOT_TOKEN && TELEGRAM_STORAGE_CHAT_ID)
+    mediaUploads: Boolean(BOT_TOKEN && TELEGRAM_STORAGE_CHAT_ID)
   });
 });
 
@@ -670,10 +716,13 @@ app.get('*', (req, res, next) => {
 
 app.use((err, _req, res, _next) => {
   if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
-    return res.status(413).json({ error: 'File ធំពេកសម្រាប់ Upload តាម Bot។ សូមបន្ថយទំហំ ឬ Upload File តូចជាងនេះ។' });
+    return res.status(413).json({
+      error: 'File ធំពេកសម្រាប់ Upload តាម Web Admin។ សូមប្រើ File តូចជាង 45 MB។'
+    });
   }
+
   console.error('[server]', err);
   res.status(500).json({ error: 'Server error.' });
 });
 
-app.listen(PORT, () => console.log(`[web] ${BRAND_NAME} listening on ${PORT}`));
+app.listen(PORT, () => console.log(`[web] ${BRAND_NAME} WEB ONLY listening on ${PORT}`));
