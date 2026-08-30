@@ -1,8 +1,9 @@
 const $ = (q, root=document) => root.querySelector(q);
-let password = sessionStorage.getItem('idramaAdminPassword') || '';
+const SESSION_KEY = 'aiStoryAdminPassword';
+let password = sessionStorage.getItem(SESSION_KEY) || '';
 let stories = [];
 
-function esc(v=''){ return String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+function esc(v=''){ return String(v).replace(/[&<>'\"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','\"':'&quot;'}[c])); }
 function money(v){ return `${Number(v || 0).toLocaleString('en-US')}៛`; }
 function headers(){ return {'Content-Type':'application/json','x-admin-password':password}; }
 function showStatus(el, text, type=''){ el.hidden=false; el.className=`status ${type}`; el.textContent=text; }
@@ -20,7 +21,7 @@ async function login(){
   if(!password) return showStatus($('#loginStatus'),'សូមបញ្ចូល Password','error');
   try{
     const data = await api('/api/admin/stories');
-    sessionStorage.setItem('idramaAdminPassword', password);
+    sessionStorage.setItem(SESSION_KEY, password);
     stories = data.stories || [];
     $('#loginPanel').hidden = true;
     $('#dashboard').hidden = false;
@@ -39,7 +40,7 @@ async function loadDashboard(){
     $('#dashboard').hidden = false;
     renderStories();
   }catch{
-    sessionStorage.removeItem('idramaAdminPassword');
+    sessionStorage.removeItem(SESSION_KEY);
     password='';
   }
 }
@@ -48,7 +49,7 @@ function renderStories(){
   $('#adminCount').textContent = `${stories.length} រឿង`;
   $('#adminStories').innerHTML = stories.length ? stories.map(s=>`
     <article class="admin-story-card">
-      <div class="admin-thumb">${s.cover_url ? `<img src="${esc(s.cover_url)}" alt="">` : '<span>🎬</span>'}</div>
+      <div class="admin-thumb">${s.cover_url ? `<img src="${esc(s.cover_url)}" alt="">` : '<span>AI</span>'}</div>
       <div class="admin-story-copy">
         <h3>${esc(s.title)}</h3>
         <div class="muted">${money(s.price_khr)} • ID: ${esc(s.id)}</div>
@@ -99,10 +100,14 @@ async function saveStory(e){
   const btn=e.submitter; if(btn) btn.disabled=true;
   showStatus($('#formStatus'),'កំពុងរក្សាទុក…');
   try{
-    await api('/api/admin/stories',{method:'POST',body:JSON.stringify(body)});
-    showStatus($('#formStatus'),'✅ រក្សាទុកជោគជ័យ','success');
+    const saved = await api('/api/admin/stories',{method:'POST',body:JSON.stringify(body)});
+    if(saved.persistedToGitHub === false){
+      showStatus($('#formStatus'),'⚠️ បានរក្សាទុកលើ Server ប៉ុណ្ណោះ។ សូមដាក់ GITHUB_TOKEN ដើម្បីរក្សាទុកអចិន្ត្រៃយ៍។','error');
+    }else{
+      showStatus($('#formStatus'),'✅ រក្សាទុកជោគជ័យ','success');
+    }
     const data=await api('/api/admin/stories'); stories=data.stories||[]; renderStories();
-    setTimeout(resetForm,700);
+    if(saved.persistedToGitHub !== false) setTimeout(resetForm,700);
   }catch(err){ showStatus($('#formStatus'),err.message,'error'); }
   if(btn) btn.disabled=false;
 }
@@ -111,14 +116,15 @@ async function deleteStory(id){
   const s=stories.find(x=>x.id===id); if(!s) return;
   if(!confirm(`លុប “${s.title}” មែនទេ?`)) return;
   try{
-    await api(`/api/admin/stories/${encodeURIComponent(id)}`,{method:'DELETE'});
+    const deleted = await api(`/api/admin/stories/${encodeURIComponent(id)}`,{method:'DELETE'});
     stories=stories.filter(x=>x.id!==id); renderStories();
+    if(deleted.persistedToGitHub === false) alert('រឿងត្រូវបានលុបលើ Server ប៉ុណ្ណោះ។ ដាក់ GITHUB_TOKEN ដើម្បីរក្សាការកែប្រែឲ្យអចិន្ត្រៃយ៍។');
   }catch(err){ alert(err.message); }
 }
 
 $('#loginBtn').addEventListener('click', login);
 $('#password').addEventListener('keydown', e=>{ if(e.key==='Enter') login(); });
-$('#logoutBtn').addEventListener('click',()=>{ sessionStorage.removeItem('idramaAdminPassword'); location.reload(); });
+$('#logoutBtn').addEventListener('click',()=>{ sessionStorage.removeItem(SESSION_KEY); location.reload(); });
 $('#storyForm').addEventListener('submit', saveStory);
 $('#cancelEdit').addEventListener('click', resetForm);
 $('#adminStories').addEventListener('click',e=>{
