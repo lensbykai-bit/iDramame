@@ -24,7 +24,7 @@
 
   async function authFetch(path, body) {
     const { url, key } = authConfig();
-    if (!url || !key) throw new Error('Account service is not configured.');
+    if (!url || !key) throw new Error('Account service មិនទាន់បានភ្ជាប់។');
 
     const res = await fetch(`${url}/auth/v1/${path}`, {
       method: 'POST',
@@ -37,13 +37,42 @@
 
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      throw new Error(data.msg || data.message || data.error_description || `Account request failed (${res.status}).`);
+      const raw = data.msg || data.message || data.error_description || `Account request failed (${res.status}).`;
+      if (/phone.*disabled|sms.*disabled|provider.*disabled/i.test(raw)) {
+        throw new Error('ការចុះឈ្មោះដោយលេខទូរស័ព្ទមិនទាន់បានបើកនៅ Supabase។ សូមប្រើ Email ជាមុន ឬបើក Phone Auth + SMS Provider។');
+      }
+      if (/invalid login credentials/i.test(raw)) {
+        throw new Error('Email/លេខទូរស័ព្ទ ឬ Password មិនត្រឹមត្រូវ។');
+      }
+      if (/email not confirmed/i.test(raw)) {
+        throw new Error('សូមបញ្ជាក់ Email របស់អ្នកជាមុនសិន។');
+      }
+      throw new Error(raw);
     }
     return data;
   }
 
   function saveSession(data) {
     if (data?.access_token) localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+  }
+
+  function loadSavedIdentity() {
+    try {
+      const s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+      return s?.user?.email || s?.user?.phone || '';
+    } catch {
+      return '';
+    }
+  }
+
+  function refreshAccountButton() {
+    const btn = document.querySelector('#accountBtn');
+    if (!btn) return;
+    const identity = loadSavedIdentity();
+    if (!identity) return;
+    const label = identity.includes('@') ? identity.split('@')[0] : identity;
+    btn.textContent = `👤 ${label}`;
+    btn.classList.add('signed-in');
   }
 
   function setStatus(text, type = '') {
@@ -100,14 +129,14 @@
       if (data.access_token) {
         saveSession(data);
         setStatus('✅ ជោគជ័យ! កំពុងចូល Account…', 'success');
-        setTimeout(() => location.reload(), 250);
+        setTimeout(() => location.reload(), 300);
         return false;
       }
 
       setStatus(
         isSignup
           ? (body.phone
-              ? '✅ គណនីត្រូវបានបង្កើត។ ប្រសិនបើ Supabase តម្រូវ សូមបញ្ជាក់តាម SMS។'
+              ? '✅ គណនីត្រូវបានបង្កើត។ ប្រសិនបើតម្រូវឱ្យបញ្ជាក់ សូមពិនិត្យ SMS។'
               : '✅ គណនីត្រូវបានបង្កើត។ សូមពិនិត្យ Email ដើម្បីបញ្ជាក់គណនី។')
           : '✅ ដំណើរការជោគជ័យ។',
         'success'
@@ -150,22 +179,27 @@
     const isSignup = heading?.textContent.includes('បង្កើតគណនី');
     submit.textContent = isSignup ? 'បង្កើតគណនី' : 'ចូលគណនី';
 
-    // Replace the original app.js submit handler completely to avoid duplicate/conflicting handlers.
+    // Use a single submit handler to avoid the old app.js handler fighting with this one.
     form.onsubmit = handleSubmit;
-
-    // Extra direct click binding makes the button responsive even when browser validation/UI interferes.
     submit.onclick = (e) => {
       e.preventDefault();
       handleSubmit(e);
     };
   }
 
-  const observer = new MutationObserver(enhanceAuthForm);
+  const observer = new MutationObserver(() => {
+    enhanceAuthForm();
+    refreshAccountButton();
+  });
   observer.observe(document.documentElement, { childList: true, subtree: true });
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', enhanceAuthForm);
+    document.addEventListener('DOMContentLoaded', () => {
+      enhanceAuthForm();
+      refreshAccountButton();
+    });
   } else {
     enhanceAuthForm();
+    refreshAccountButton();
   }
 })();
