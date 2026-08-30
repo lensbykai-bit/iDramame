@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="km">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0710" />
+  <title>iDrama Pay — Wallet</title>
+  <link rel="stylesheet" href="/kantumruy.css" />
+  <style>
+    :root{--pink:#ff4f9a;--pink2:#ff82bd;--bg:#09060d;--panel:#15101b;--line:rgba(255,255,255,.09);--muted:#aaa0b3;--green:#45e38a;--yellow:#ffd66b}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 18% 0%,rgba(255,79,154,.15),transparent 30%),radial-gradient(circle at 90% 10%,rgba(115,73,255,.12),transparent 25%),var(--bg);color:#fff;min-height:100vh}
+    button,input{font:inherit}.app{max-width:1120px;margin:auto;padding:22px 16px 90px}.top{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:22px}.brand{display:flex;gap:11px;align-items:center}.logo{width:46px;height:46px;border-radius:15px;background:linear-gradient(135deg,var(--pink),var(--pink2));display:grid;place-items:center;font-weight:900;box-shadow:0 12px 32px rgba(255,79,154,.28)}.brand h1{font-size:22px;margin:0}.brand p{margin:2px 0 0;color:var(--muted);font-size:12px}.logout{border:1px solid var(--line);background:rgba(255,255,255,.04);color:#fff;border-radius:13px;padding:10px 13px}
+    .login{max-width:520px;margin:70px auto;background:rgba(21,16,27,.96);border:1px solid var(--line);border-radius:26px;padding:24px;box-shadow:0 24px 70px rgba(0,0,0,.35)}.login h2{margin:0 0 6px}.login p{color:var(--muted)}.login input,.amount-row input{width:100%;background:#0e0a12;color:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 15px;outline:none}.login input:focus,.amount-row input:focus{border-color:var(--pink);box-shadow:0 0 0 3px rgba(255,79,154,.12)}.primary{width:100%;border:0;border-radius:14px;padding:14px;background:linear-gradient(135deg,#ff3f91,#ff75b4);color:#fff;font-weight:900;margin-top:12px}
+    .wallet{display:none}.wallet.open{display:block}.hero{background:linear-gradient(135deg,#fd3f8d,#f45ba8 55%,#8e5df5);border-radius:28px;padding:24px;box-shadow:0 20px 55px rgba(255,79,154,.18)}.hero-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.hero small{opacity:.82}.balance{font-size:38px;font-weight:900;margin:8px 0 2px}.balance-note{font-size:12px;opacity:.85}.badge{background:rgba(255,255,255,.16);padding:8px 11px;border-radius:999px;font-size:12px;font-weight:800}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}.stat{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.14);padding:12px;border-radius:15px}.stat span{display:block;font-size:11px;opacity:.8}.stat strong{font-size:16px}
+    .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:16px;margin-top:16px}.panel{background:rgba(21,16,27,.95);border:1px solid var(--line);border-radius:24px;padding:19px}.panel h2{margin:0 0 4px;font-size:20px}.sub{color:var(--muted);font-size:13px;margin:0 0 15px}.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.action{border:1px solid var(--line);background:#100b15;color:#fff;padding:16px;border-radius:17px;text-align:left}.action strong{display:block;margin-top:7px}.action span{color:var(--muted);font-size:12px}.action.pink{background:linear-gradient(135deg,rgba(255,63,145,.18),rgba(255,117,180,.10));border-color:rgba(255,79,154,.28)}.amount-row{display:grid;grid-template-columns:1fr auto;gap:9px;margin-top:12px}.amount-row button{border:0;border-radius:14px;padding:0 18px;background:var(--pink);color:#fff;font-weight:900}
+    .qrbox{display:none;background:#fff;color:#17121a;border-radius:22px;padding:18px;margin-top:15px;text-align:center}.qrbox.open{display:block}.qrbox img{width:min(300px,100%);display:block;margin:10px auto;border-radius:14px}.qrbox .merchant{font-size:20px;font-weight:900}.qrbox .hint{font-size:12px;color:#746a77}.qrbox .amount{font-size:28px;font-weight:900;color:#ed3f87;margin:3px 0}
+    .list{display:grid;gap:9px;max-height:520px;overflow:auto}.tx{display:grid;grid-template-columns:1fr auto;gap:10px;background:#100b15;border:1px solid var(--line);border-radius:16px;padding:13px}.tx strong{display:block}.tx small{display:block;color:var(--muted);margin-top:3px}.paid{color:var(--green)}.pending{color:var(--yellow)}.rejected{color:#ff8787}.empty{text-align:center;color:var(--muted);padding:25px}.notice{font-size:12px;color:var(--muted);margin-top:14px;line-height:1.7}
+    .nav{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);width:min(560px,calc(100% - 24px));background:rgba(17,12,23,.94);backdrop-filter:blur(18px);border:1px solid var(--line);border-radius:20px;padding:8px;display:flex;justify-content:space-around;z-index:20}.nav button{background:none;border:0;color:#c9c0ce;padding:8px 10px;border-radius:12px}.nav button.active{background:rgba(255,79,154,.13);color:#ff76b4}
+    .status{margin-top:10px;font-size:13px;line-height:1.6}.error{color:#ff9292}.success{color:#64e99a}@media(max-width:800px){.grid{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.stats .stat:last-child{grid-column:1/-1}.app{padding-top:15px}.hero{padding:19px}.balance{font-size:33px}.action-grid{grid-template-columns:1fr 1fr}}
+  </style>
+</head>
+<body>
+<main class="app">
+  <header class="top">
+    <div class="brand"><div class="logo">iP</div><div><h1>iDrama Pay</h1><p>Personal Wallet • Bakong KHQR</p></div></div>
+    <button id="logoutBtn" class="logout" hidden>ចាកចេញ</button>
+  </header>
+
+  <section id="loginBox" class="login">
+    <h2>ចូល Wallet</h2><p>បញ្ចូល ADMIN_PASSWORD ដើម្បីគ្រប់គ្រង KHQR និងប្រវត្តិទូទាត់។</p>
+    <input id="password" type="password" autocomplete="current-password" placeholder="Admin password" />
+    <button id="loginBtn" class="primary">ចូល iDrama Pay</button><div id="loginStatus" class="status"></div>
+  </section>
+
+  <section id="wallet" class="wallet">
+    <section class="hero">
+      <div class="hero-top"><div><small>ចំនួនទឹកប្រាក់ដែលបានអនុម័តក្នុងប្រព័ន្ធ</small><div id="recordedBalance" class="balance">0៛</div><div class="balance-note">មិនមែនសមតុល្យ Bank/Bakong ផ្ទាល់ទេ</div></div><div class="badge">BAKONG KHQR</div></div>
+      <div class="stats"><div class="stat"><span>បានអនុម័ត</span><strong id="paidCount">0</strong></div><div class="stat"><span>រង់ចាំពិនិត្យ</span><strong id="pendingCount">0</strong></div><div class="stat"><span>សរុប Orders</span><strong id="orderCount">0</strong></div></div>
+    </section>
+
+    <div class="grid">
+      <section class="panel">
+        <h2>ទទួលប្រាក់</h2><p class="sub">បង្កើត KHQR សម្រាប់ភ្ញៀវ Scan និងបង់ចូលគណនី Bakong របស់អ្នក។</p>
+        <div class="action-grid">
+          <button id="directQrBtn" class="action pink"><span>QR ប្រើបានជាប្រចាំ</span><strong>▦ ទទួលប្រាក់ផ្ទាល់</strong></button>
+          <button id="refreshBtn" class="action"><span>ធ្វើបច្ចុប្បន្នភាព</span><strong>↻ Refresh</strong></button>
+        </div>
+        <div class="amount-row"><input id="amount" type="number" min="100" step="100" inputmode="numeric" placeholder="ចំនួន KHR ឧ. 5000" /><button id="amountQrBtn">បង្កើត QR</button></div>
+        <div id="qrStatus" class="status"></div>
+        <div id="qrBox" class="qrbox"><div id="qrType" class="hint">BAKONG KHQR</div><div id="qrAmount" class="amount"></div><img id="qrImage" alt="Bakong KHQR"/><div id="qrMerchant" class="merchant">iDrama.ai</div><div id="qrHint" class="hint"></div></div>
+        <div class="notice">🛡️ iDrama Pay ជា Personal Wallet dashboard។ App មិនរក្សាទុកប្រាក់អតិថិជន និងមិនជំនួសធនាគារទេ។ ប្រាក់ពិតត្រូវចូលគណនី Bakong/KHQR ដែលបានកំណត់នៅ Server។</div>
+      </section>
+
+      <section class="panel">
+        <h2>ប្រវត្តិទូទាត់</h2><p class="sub">បង្ហាញ Order ដែលបានរក្សាទុកក្នុងប្រព័ន្ធ iDrama.ai។</p><div id="transactions" class="list"><div class="empty">កំពុងផ្ទុក…</div></div>
+      </section>
+    </div>
+  </section>
+</main>
+<nav id="bottomNav" class="nav" hidden><button class="active">⌂ Home</button><button id="navReceive">▦ Receive</button><button id="navHistory">↕ History</button></nav>
+<script src="/supabase-config.js"></script><script src="/wallet.js"></script>
+</body>
+</html>
