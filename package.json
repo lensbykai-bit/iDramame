@@ -1,8 +1,8 @@
 {
   "name": "idrama-ai",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "private": true,
-  "description": "iDramaAi — Cambodia AI drama web store with Bakong KHQR, protected watch pages, and Telegram catalog bot",
+  "description": "iDramaAi — Cambodia AI drama web store with Bakong KHQR, protected watch pages, Telegram catalog, and Telegram-backed media uploads",
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
@@ -15,6 +15,7 @@
     "bakong-khqr": "^1.0.11",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
     "qrcode": "^1.5.4",
     "telegraf": "^4.16.3"
   }
