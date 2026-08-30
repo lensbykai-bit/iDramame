@@ -6,7 +6,8 @@ const { Telegraf, Markup } = require('telegraf');
 
 const BRAND_NAME = process.env.BRAND_NAME || 'iDramaAi';
 const BOT_TOKEN = process.env.BOT_TOKEN || '';
-const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || 'https://idramame.onrender.com').replace(/\/$/, '');
+const TELEGRAM_BOT_USERNAME = process.env.TELEGRAM_BOT_USERNAME || 'iDramaAiBot';
+const PUBLIC_BASE_URL = (process.env.PUBLIC_BASE_URL || 'https://idramaai.onrender.com').replace(/\/$/, '');
 const storiesPath = path.join(__dirname, 'stories.json');
 
 function loadStories() {
@@ -100,7 +101,7 @@ function startTelegram() {
   ]).catch((err) => console.error('[telegram-profile]', err.message));
 
   bot.launch()
-    .then(() => console.log(`[telegram] ${BRAND_NAME} bot started`))
+    .then(() => console.log(`[telegram] ${BRAND_NAME} bot started as @${TELEGRAM_BOT_USERNAME}`))
     .catch((err) => console.error('[telegram-launch]', err.message));
 
   process.once('SIGINT', () => bot.stop('SIGINT'));
