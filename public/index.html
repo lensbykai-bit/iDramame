@@ -4,9 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#09060d" />
-  <title>iDramaAi — Watch Drama Online</title>
+  <meta name="description" content="iDramaAi — ទិញ និងមើលរឿងខ្លីតាម Website ជាមួយ Bakong KHQR" />
+  <title>iDramaAi — Short Drama Store</title>
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/brand.css" />
+  <link rel="stylesheet" href="/store.css" />
 </head>
 <body>
   <div class="glow glow-a"></div><div class="glow glow-b"></div>
@@ -16,49 +18,82 @@
       <span class="brand-mark">iD</span>
       <span class="brand-khmer"><strong>iDramaAi</strong></span>
     </a>
+
+    <nav class="store-nav" aria-label="Main navigation">
+      <a href="#home">ទំព័រដើម</a>
+      <a href="#stories">រឿងខ្លី</a>
+      <a href="#library">រឿងដែលបានទិញ</a>
+    </nav>
+
     <span class="country-pill">🇰🇭 សម្រាប់កម្ពុជា</span>
   </header>
 
   <main>
-    <section class="hero">
-      <div class="eyebrow">AI DRAMA • MOVIE • SERIES</div>
-      <h1>មើលរឿងនៅ Website<br><span>បង់ Bakong រួច មើល Full Movie ភ្លាម</span></h1>
-      <p>ជ្រើសរឿងដែលអ្នកចង់មើល → មើល Trailer → បង់តាម Bakong KHQR → ពិនិត្យការបង់ជោគជ័យ → Website បើក Full Movie នៅ Watch Page ដោយស្វ័យប្រវត្តិ។</p>
+    <section id="home" class="hero">
+      <div class="hero-badge">🎬 SHORT DRAMA STORE • BAKONG KHQR</div>
+      <div class="eyebrow">IDRAMAAI • WATCH ONLINE</div>
+      <h1>ទិញរឿងខ្លីដែលអ្នកចូលចិត្ត<br><span>បង់ Bakong រួច មើលភ្លាម</span></h1>
+      <p>ជ្រើសរឿង → មើល Trailer → Scan Bakong KHQR → Website ផ្ទៀងផ្ទាត់ការបង់ → បើករឿងពេញនៅ Watch Page ដោយស្វ័យប្រវត្តិ។</p>
 
       <div class="hero-actions">
-        <a class="primary-btn" href="#stories">🎬 មើលរឿងទាំងអស់</a>
+        <a class="primary-btn" href="#stories">🎬 មើលរឿងខ្លី</a>
+        <a class="secondary-btn" href="#library">📚 រឿងដែលបានទិញ</a>
       </div>
 
       <div class="trust-row">
-        <span>🌐 Web Only</span>
-        <span>💳 Bakong KHQR</span>
-        <span>🔐 Full Movie ក្រោយបង់</span>
-        <span>▶️ Watch Page</span>
+        <span>🇰🇭 Bakong KHQR</span>
+        <span>⚡ Auto Verify</span>
+        <span>🔐 Unlock ក្រោយបង់</span>
+        <span>▶️ Watch Online</span>
+      </div>
+
+      <div class="step-row">
+        <div class="step-card"><div>①</div><strong>ជ្រើសរឿង</strong><span>មើល Cover, Preview និងតម្លៃ</span></div>
+        <div class="step-card"><div>②</div><strong>មើល Trailer</strong><span>មើលខ្លីៗមុនសម្រេចចិត្តទិញ</span></div>
+        <div class="step-card"><div>③</div><strong>បង់ KHQR</strong><span>Scan QR តាម Bakong/ធនាគារដែលគាំទ្រ</span></div>
+        <div class="step-card"><div>④</div><strong>មើលរឿងពេញ</strong><span>បង់ជោគជ័យ Website បើកឱ្យភ្លាម</span></div>
       </div>
     </section>
 
     <section id="stories" class="section">
       <div class="section-head">
-        <div><div class="eyebrow">CATALOG</div><h2>រឿងទាំងអស់</h2></div>
+        <div><div class="eyebrow">SHORT DRAMA CATALOG</div><h2>រឿងខ្លីទាំងអស់</h2></div>
         <span id="storyCount" class="muted"></span>
       </div>
+
+      <div class="store-toolbar">
+        <label class="search-box">
+          <span>🔎</span>
+          <input id="storySearch" type="search" autocomplete="off" placeholder="ស្វែងរកឈ្មោះរឿង..." aria-label="Search stories" />
+        </label>
+        <span class="mini-note">Trailer មើល Free • Full Story បង់មុន</span>
+      </div>
+
       <div id="storyGrid" class="story-grid"><div class="loading">កំពុងផ្ទុករឿង…</div></div>
+    </section>
+
+    <section id="library" class="section library-section">
+      <div class="section-head">
+        <div><div class="eyebrow">MY LIBRARY</div><h2>រឿងដែលបានទិញ</h2></div>
+        <span class="muted">រក្សាទុកលើ Browser នេះ</span>
+      </div>
+      <div id="libraryGrid" class="library-grid"></div>
     </section>
 
     <section class="security-card">
       <div class="security-icon">🔐</div>
       <div>
-        <h3>បង់មុន • មើលក្រោយ</h3>
-        <p>Trailer អាចមើលមុនបាន។ Full Movie នឹងបើកតែក្រោយ Website ផ្ទៀងផ្ទាត់ការបង់តាម Bakong ជោគជ័យប៉ុណ្ណោះ។</p>
+        <h3>Bakong KHQR + Auto Unlock</h3>
+        <p>Trailer អាចមើលមុនបាន។ រឿងពេញនឹងបើកតែក្រោយ Server ផ្ទៀងផ្ទាត់ Amount, Currency និងគណនីទទួលការទូទាត់បានត្រឹមត្រូវប៉ុណ្ណោះ។</p>
       </div>
     </section>
   </main>
 
-  <footer>© 2026 iDramaAi • Cambodia</footer>
+  <footer>© 2026 iDramaAi • Short Drama Store • Cambodia</footer>
 
   <div id="modal" class="modal" aria-hidden="true">
     <div class="modal-backdrop" data-close></div>
-    <div class="modal-card" role="dialog" aria-modal="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-label="Story checkout">
       <button class="close-btn" data-close aria-label="Close">×</button>
       <div id="modalBody"></div>
     </div>
