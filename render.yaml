@@ -10,7 +10,7 @@ services:
       - key: NODE_VERSION
         value: 20
       - key: BRAND_NAME
-        value: iDramaAi
+        value: iDrama.ai
       - key: PUBLIC_BASE_URL
         value: https://idramaai.onrender.com
 
@@ -32,15 +32,15 @@ services:
       - key: BAKONG_ACCOUNT_ID
         sync: false
       - key: BAKONG_MERCHANT_NAME
-        value: iDramaAi
+        value: iDrama.ai
       - key: BAKONG_STORE_LABEL
-        value: iDramaAi
+        value: iDrama.ai
       - key: BAKONG_MERCHANT_CITY
         value: PHNOM PENH
       - key: BAKONG_MOBILE_NUMBER
         sync: false
 
-      # Bakong Open API transaction verification
+      # Bakong Open API token is kept server-side. Customer checkout does not auto-approve.
       - key: BAKONG_API_BASE_URL
         value: https://api-bakong.nbc.gov.kh
       - key: BAKONG_TOKEN
