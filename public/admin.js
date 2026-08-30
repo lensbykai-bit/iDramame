@@ -1,5 +1,5 @@
 const $ = (q, root=document) => root.querySelector(q);
-const SESSION_KEY = 'aiStoryAdminPassword';
+const SESSION_KEY = 'iDramaAiAdminPassword';
 let password = sessionStorage.getItem(SESSION_KEY) || '';
 let stories = [];
 
