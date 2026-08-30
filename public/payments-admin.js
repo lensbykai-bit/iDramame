@@ -31,10 +31,7 @@ function money(value) {
 async function adminCall(action, payload = {}) {
   const response = await fetch(EDGE_URL, {
     method: 'POST',
-    headers: {
-      apikey: API_KEY,
-      'Content-Type': 'application/json'
-    },
+    headers: { apikey: API_KEY, 'Content-Type': 'application/json' },
     body: JSON.stringify({ action, adminPassword, ...payload })
   });
   const data = await response.json().catch(() => ({}));
@@ -60,10 +57,7 @@ async function generateRealKhqr() {
   try {
     const response = await fetch('/api/admin/khqr/generate', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-admin-password': adminPassword
-      },
+      headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPassword },
       body: JSON.stringify({ amount })
     });
     const data = await response.json().catch(() => ({}));
@@ -72,11 +66,12 @@ async function generateRealKhqr() {
 
     realKhqrImage.src = data.qrDataUrl;
     realKhqrAmountText.textContent = money(data.amount);
-    realKhqrMerchant.textContent = `អ្នកទទួល: ${data.merchantName || 'iDrama.ai'}`;
-    realKhqrBill.textContent = `Bill: ${data.billNumber || '-'}`;
+    realKhqrMerchant.textContent = data.merchantName || 'iDrama.ai';
+    realKhqrBill.textContent = data.billNumber || '-';
     realKhqrResult.classList.add('open');
     khqrMakerStatus.className = 'maker-status status success';
-    khqrMakerStatus.textContent = '✅ KHQR ពិតត្រូវបានបង្កើតរួច។ សូមសាក Scan ក្នុង Bakong/Bank App មុនទទួលប្រាក់ពិត។';
+    khqrMakerStatus.textContent = '✅ KHQR ពិតត្រូវបានបង្កើតរួច។ អាច Scan តាម Bakong/Bank App បាន។';
+    realKhqrResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
   } catch (err) {
     khqrMakerStatus.className = 'maker-status status error';
     khqrMakerStatus.textContent = err.message;
