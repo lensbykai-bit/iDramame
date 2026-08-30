@@ -4,35 +4,95 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="robots" content="noindex,nofollow" />
-  <title>iDramaAi — Admin</title>
+  <meta name="theme-color" content="#09060d" />
+  <title>iDramaAi — Admin Dashboard</title>
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/brand.css" />
+  <link rel="stylesheet" href="/admin-dashboard.css" />
 </head>
 <body>
   <div class="glow glow-a"></div><div class="glow glow-b"></div>
-  <header class="topbar">
-    <a class="brand" href="/"><span class="brand-mark">iD</span><span class="brand-khmer"><strong>iDramaAi</strong></span></a>
-    <span class="country-pill">ADMIN • CHANNEL + STORE</span>
+
+  <header class="topbar admin-topbar">
+    <a class="brand" href="/" aria-label="iDramaAi">
+      <span class="brand-mark">iD</span>
+      <span class="brand-khmer"><strong>iDramaAi</strong></span>
+    </a>
+    <span class="country-pill">🔐 ADMIN DASHBOARD</span>
   </header>
 
   <main class="admin-main">
     <section id="loginPanel" class="admin-panel admin-login">
-      <div class="eyebrow">SECURE ADMIN</div>
-      <h1>គ្រប់គ្រងរឿង</h1>
-      <p class="muted">បញ្ចូល Admin Password ដែលបានកំណត់ក្នុង Render Environment។</p>
-      <input id="password" class="admin-input" type="password" autocomplete="current-password" placeholder="Admin password" />
-      <button id="loginBtn" class="primary-btn admin-wide">ចូល Admin</button>
+      <div class="login-icon">🔐</div>
+      <div class="eyebrow">IDRAMAAI ADMIN</div>
+      <h1>ចូលគ្រប់គ្រង Website</h1>
+      <p class="muted">បញ្ចូល Admin Password ដែលបានកំណត់នៅ Render Environment។</p>
+      <label class="admin-label">Admin Password
+        <input id="password" class="admin-input" type="password" autocomplete="current-password" placeholder="••••••••••••" />
+      </label>
+      <button id="loginBtn" class="primary-btn admin-wide">ចូល Admin Dashboard</button>
       <div id="loginStatus" class="status" hidden></div>
     </section>
 
     <section id="dashboard" hidden>
-      <div class="admin-head">
-        <div><div class="eyebrow">TELEGRAM CHANNEL + WEBSITE STORE</div><h1>រឿងក្នុង iDramaAi</h1></div>
-        <div class="admin-actions"><a class="ghost-btn" href="/" target="_blank">បើក Website</a><button id="logoutBtn" class="ghost-btn">ចាកចេញ</button></div>
+      <div class="admin-head dashboard-title-row">
+        <div>
+          <div class="eyebrow">CONTROL CENTER</div>
+          <h1>iDramaAi Admin</h1>
+          <p class="muted dashboard-subtitle">គ្រប់គ្រងរឿង តម្លៃ Media និងពិនិត្យស្ថានភាព Bakong KHQR។</p>
+        </div>
+        <div class="admin-actions">
+          <button id="refreshBtn" class="ghost-btn">↻ Refresh</button>
+          <a class="ghost-btn" href="/" target="_blank" rel="noopener">↗ បើក Website</a>
+          <button id="logoutBtn" class="danger-btn">ចាកចេញ</button>
+        </div>
       </div>
 
-      <section class="admin-panel">
-        <h2 id="formTitle">➕ បន្ថែមរឿងថ្មី</h2>
+      <section class="admin-overview" aria-label="System overview">
+        <article class="overview-card">
+          <span class="overview-icon">🎬</span>
+          <div><strong id="statStories">0</strong><span>រឿងសរុប</span></div>
+        </article>
+        <article class="overview-card">
+          <span class="overview-icon">🔐</span>
+          <div><strong id="statFull">0</strong><span>Full Movie Ready</span></div>
+        </article>
+        <article class="overview-card">
+          <span class="overview-icon">🇰🇭</span>
+          <div><strong id="statBakong">Checking…</strong><span>Bakong KHQR</span></div>
+        </article>
+        <article class="overview-card">
+          <span class="overview-icon">☁️</span>
+          <div><strong id="statMedia">Checking…</strong><span>Media Storage</span></div>
+        </article>
+      </section>
+
+      <section class="system-panel admin-panel">
+        <div class="system-head">
+          <div>
+            <div class="eyebrow">SYSTEM STATUS</div>
+            <h2>ស្ថានភាពប្រព័ន្ធ</h2>
+          </div>
+          <span id="systemOverall" class="system-badge">កំពុងពិនិត្យ…</span>
+        </div>
+        <div class="system-grid">
+          <div class="system-item"><span>Bakong Checkout</span><strong id="bakongStatus">កំពុងពិនិត្យ…</strong></div>
+          <div class="system-item"><span>Payment Mode</span><strong id="paymentMode">—</strong></div>
+          <div class="system-item"><span>Media Upload</span><strong id="mediaStatus">កំពុងពិនិត្យ…</strong></div>
+          <div class="system-item"><span>Account Library</span><strong id="libraryStatus">កំពុងពិនិត្យ…</strong></div>
+        </div>
+        <p class="system-note">🔒 Admin មិនបង្ហាញ Bakong Token ឬ Secret Key ទេ។ វាបង្ហាញតែស្ថានភាព Ready/Not Ready ប៉ុណ្ណោះ។</p>
+      </section>
+
+      <section class="admin-panel story-editor-panel">
+        <div class="editor-title-row">
+          <div>
+            <div class="eyebrow">STORY EDITOR</div>
+            <h2 id="formTitle">➕ បន្ថែមរឿងថ្មី</h2>
+          </div>
+          <button id="cancelEdit" class="ghost-btn" type="button" hidden>បោះបង់កែ</button>
+        </div>
+
         <form id="storyForm" class="admin-form">
           <input id="storyId" type="hidden" />
           <input id="coverFileId" type="hidden" />
@@ -42,51 +102,74 @@
           <input id="trailerLegacyUrl" type="hidden" />
           <input id="fullLegacyUrl" type="hidden" />
 
-          <div class="status">🌐 រឿងទាំងអស់បង្ហាញនៅ Website Store។ បន្ទាប់ពី Save រួច ចូល <strong>@iDramaAi_bot</strong> ហើយវាយ <strong>/postmovie</strong> ដើម្បី Post រឿងទៅ Telegram Channel។</div>
-
-          <label>ចំណងជើង<input id="title" class="admin-input" required placeholder="ឈ្មោះរឿង" /></label>
-          <label>Preview / Description<textarea id="preview" class="admin-input admin-textarea" placeholder="អត្ថបទពិពណ៌នារឿង..."></textarea></label>
-          <label>តម្លៃ (៛)<input id="price" class="admin-input" type="number" min="0" step="100" value="5000" required /></label>
-
-          <div id="mediaUploadFields">
-            <label>Cover Image
-              <input id="coverFile" class="admin-input" type="file" accept="image/*" />
-              <span id="coverStatus" class="muted">មិនទាន់ជ្រើសរូប</span>
+          <div class="form-grid form-grid-main">
+            <label>ចំណងជើងរឿង
+              <input id="title" class="admin-input" required placeholder="ឧ. រឿង អ្នកប្រម៉ាញវត្ថុបុរាណ" />
             </label>
-
-            <label>Trailer Video
-              <input id="trailerFile" class="admin-input" type="file" accept="video/*" />
-              <span id="trailerStatus" class="muted">មិនទាន់ជ្រើសវីដេអូ</span>
-            </label>
-
-            <label>Full Movie — បើកមើលក្រោយបង់ប្រាក់
-              <input id="fullFile" class="admin-input" type="file" accept="video/*" />
-              <span id="fullStatus" class="muted">មិនទាន់ជ្រើស Full Movie</span>
+            <label>តម្លៃ (៛)
+              <input id="price" class="admin-input" type="number" min="0" step="100" value="5000" required />
             </label>
           </div>
 
-          <div class="security-card">
-            <div class="security-icon">🔐</div>
-            <div>
-              <h3>Telegram → Website → Bakong → Watch</h3>
-              <p>Telegram Channel បង្ហាញ Cover/Preview និងប៊ូតុងទិញ។ អតិថិជនត្រូវបង់ Bakong KHQR នៅ Website មុន។ Full Movie មិនត្រូវបានបង្ហាញសាធារណៈទេ ហើយ Watch Page បើកតែក្រោយផ្ទៀងផ្ទាត់ការបង់ជោគជ័យ។</p>
+          <label>Preview / Description
+            <textarea id="preview" class="admin-input admin-textarea" placeholder="សរសេរពិពណ៌នាខ្លីៗអំពីរឿង..."></textarea>
+          </label>
+
+          <div class="upload-section">
+            <div class="upload-title"><strong>Media Files</strong><span class="muted">Cover + Trailer + Full Movie</span></div>
+            <div id="mediaUploadFields" class="media-upload-grid">
+              <label class="upload-card">
+                <span class="upload-emoji">🖼️</span>
+                <strong>Cover Image</strong>
+                <small>JPG / PNG / WEBP</small>
+                <input id="coverFile" class="admin-input" type="file" accept="image/*" />
+                <span id="coverStatus" class="upload-state">មិនទាន់ជ្រើសរូប</span>
+              </label>
+
+              <label class="upload-card">
+                <span class="upload-emoji">🎞️</span>
+                <strong>Trailer Video</strong>
+                <small>Preview សម្រាប់មើលមុនទិញ</small>
+                <input id="trailerFile" class="admin-input" type="file" accept="video/*" />
+                <span id="trailerStatus" class="upload-state">មិនទាន់ជ្រើសវីដេអូ</span>
+              </label>
+
+              <label class="upload-card protected-upload">
+                <span class="upload-emoji">🔐</span>
+                <strong>Full Movie</strong>
+                <small>បើកតែក្រោយបង់ប្រាក់</small>
+                <input id="fullFile" class="admin-input" type="file" accept="video/*" />
+                <span id="fullStatus" class="upload-state">មិនទាន់ជ្រើស Full Movie</span>
+              </label>
             </div>
           </div>
 
-          <div class="admin-actions">
-            <button class="primary-btn" type="submit">💾 Upload + រក្សាទុក</button>
-            <button id="cancelEdit" class="ghost-btn" type="button" hidden>បោះបង់កែ</button>
+          <div class="admin-payment-note">
+            <span>🇰🇭</span>
+            <div><strong>Bakong KHQR Checkout</strong><p>អ្នកកំណត់តម្លៃនៅទីនេះ។ Customer មើល Trailer → បង់ Bakong KHQR → Server verify → Unlock Full Movie។</p></div>
+          </div>
+
+          <div class="admin-actions editor-actions">
+            <button id="saveBtn" class="primary-btn" type="submit">💾 Upload + រក្សាទុក</button>
+            <button id="clearBtn" class="ghost-btn" type="button">សម្អាត Form</button>
           </div>
           <div id="formStatus" class="status" hidden></div>
         </form>
       </section>
 
-      <section class="section">
-        <div class="section-head"><div><div class="eyebrow">WEBSITE CATALOG</div><h2>រឿងទាំងអស់</h2></div><span id="adminCount" class="muted"></span></div>
+      <section class="section catalog-admin-section">
+        <div class="section-head admin-catalog-head">
+          <div><div class="eyebrow">WEBSITE CATALOG</div><h2>រឿងទាំងអស់</h2></div>
+          <div class="catalog-tools">
+            <input id="adminSearch" class="admin-input admin-search" type="search" placeholder="🔎 ស្វែងរករឿង..." />
+            <span id="adminCount" class="muted"></span>
+          </div>
+        </div>
         <div id="adminStories" class="admin-story-list"><div class="loading">កំពុងផ្ទុក…</div></div>
       </section>
     </section>
   </main>
+
   <script src="/admin.js" defer></script>
 </body>
 </html>
