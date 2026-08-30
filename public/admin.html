@@ -27,7 +27,7 @@
 
     <section id="dashboard" hidden>
       <div class="admin-head">
-        <div><div class="eyebrow">WEB CMS</div><h1>រឿងក្នុង iDramaAi</h1></div>
+        <div><div class="eyebrow">WEB + TELEGRAM CMS</div><h1>រឿងក្នុង iDramaAi</h1></div>
         <div class="admin-actions"><a class="ghost-btn" href="/" target="_blank">បើក Website</a><button id="logoutBtn" class="ghost-btn">ចាកចេញ</button></div>
       </div>
 
@@ -35,12 +35,32 @@
         <h2 id="formTitle">➕ បន្ថែមរឿងថ្មី</h2>
         <form id="storyForm" class="admin-form">
           <input id="storyId" type="hidden" />
+
+          <label>ទីតាំងរឿង
+            <select id="placement" class="admin-input" required>
+              <option value="web">🌐 រឿងខ្លី — ដាក់ក្នុង Web</option>
+              <option value="telegram">✈️ រឿងវែង — ដាក់ក្នុង Telegram</option>
+            </select>
+          </label>
+
           <label>ចំណងជើង<input id="title" class="admin-input" required placeholder="ឈ្មោះរឿង" /></label>
           <label>Preview / Description<textarea id="preview" class="admin-input admin-textarea" placeholder="អត្ថបទពិពណ៌នារឿង..."></textarea></label>
           <label>តម្លៃ (៛)<input id="price" class="admin-input" type="number" min="0" step="100" value="5000" required /></label>
           <label>Cover Image URL<input id="coverUrl" class="admin-input" type="url" placeholder="https://.../cover.jpg" /></label>
           <label>Trailer Video URL<input id="trailerUrl" class="admin-input" type="url" placeholder="https://.../trailer.mp4" /></label>
-          <label>Full Video URL <span class="muted">(មិនបង្ហាញក្នុង Catalog)</span><input id="fullUrl" class="admin-input" type="url" placeholder="https://.../full-video.mp4" /></label>
+
+          <label id="webVideoField">Full Video URL — សម្រាប់រឿងខ្លីក្នុង Web
+            <span class="muted">(មិនបង្ហាញក្នុង Public Catalog)</span>
+            <input id="fullUrl" class="admin-input" type="url" placeholder="https://.../full-video.mp4" />
+          </label>
+
+          <label id="telegramField" hidden>Telegram Video / Post Link — សម្រាប់រឿងវែង
+            <span class="muted">Upload រឿងទៅ Telegram ជាមុន ហើយ Paste link របស់ Message/Video នៅទីនេះ។</span>
+            <input id="telegramUrl" class="admin-input" type="url" placeholder="https://t.me/..." />
+          </label>
+
+          <div id="placementHint" class="status">🌐 Web: រឿងខ្លីនឹងបង្ហាញនៅ Website និងអាចទិញតាម Bakong KHQR។</div>
+
           <div class="admin-actions">
             <button class="primary-btn" type="submit">💾 រក្សាទុក</button>
             <button id="cancelEdit" class="ghost-btn" type="button" hidden>បោះបង់កែ</button>
@@ -56,7 +76,10 @@
 
       <section class="security-card">
         <div class="security-icon">ℹ️</div>
-        <div><h3>Video Storage</h3><p>Admin រក្សា URL របស់ Cover, Trailer និង Full Video។ Full Video URL មិនត្រូវបានផ្ញើទៅ Catalog សាធារណៈទេ; Website បញ្ជូនវាតាម Signed Watch Link បន្ទាប់ពីបង់ជោគជ័យ។</p></div>
+        <div>
+          <h3>របៀបដាក់រឿង</h3>
+          <p><strong>រឿងខ្លី:</strong> ជ្រើស Web ហើយដាក់ Full Video URL។ <strong>រឿងវែង:</strong> ជ្រើស Telegram ហើយដាក់ Telegram Video/Post Link។ Website នឹងបង្ហាញតែរឿងខ្លី ខណៈ Bot នឹងបង្ហាញតែរឿងវែង។</p>
+        </div>
       </section>
     </section>
   </main>
