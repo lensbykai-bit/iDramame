@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: khnhom-chong-merl-rueng-ai
+    name: idrama-ai
     runtime: node
     plan: free
     buildCommand: npm install
@@ -10,7 +10,7 @@ services:
       - key: NODE_VERSION
         value: 20
       - key: BRAND_NAME
-        value: ខ្ញុំចង់មើលរឿងអេអាយ
+        value: iDramaAi
       - key: BOT_TOKEN
         sync: false
       - key: PUBLIC_BASE_URL
@@ -18,9 +18,9 @@ services:
       - key: BAKONG_ACCOUNT_ID
         sync: false
       - key: BAKONG_MERCHANT_NAME
-        value: AI STORY KH
+        value: iDramaAi
       - key: BAKONG_STORE_LABEL
-        value: AI STORY KH
+        value: iDramaAi
       - key: BAKONG_MERCHANT_CITY
         value: PHNOM PENH
       - key: BAKONG_MOBILE_NUMBER
