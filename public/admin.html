@@ -12,7 +12,7 @@
   <div class="glow glow-a"></div><div class="glow glow-b"></div>
   <header class="topbar">
     <a class="brand" href="/"><span class="brand-mark">iD</span><span class="brand-khmer"><strong>iDramaAi</strong></span></a>
-    <span class="country-pill">ADMIN</span>
+    <span class="country-pill">ADMIN • WEB ONLY</span>
   </header>
 
   <main class="admin-main">
@@ -27,7 +27,7 @@
 
     <section id="dashboard" hidden>
       <div class="admin-head">
-        <div><div class="eyebrow">WEB + TELEGRAM CMS</div><h1>រឿងក្នុង iDramaAi</h1></div>
+        <div><div class="eyebrow">WEB ONLY CMS</div><h1>រឿងក្នុង iDramaAi</h1></div>
         <div class="admin-actions"><a class="ghost-btn" href="/" target="_blank">បើក Website</a><button id="logoutBtn" class="ghost-btn">ចាកចេញ</button></div>
       </div>
 
@@ -41,48 +41,40 @@
           <input id="coverLegacyUrl" type="hidden" />
           <input id="trailerLegacyUrl" type="hidden" />
           <input id="fullLegacyUrl" type="hidden" />
-          <input id="telegramUrl" type="hidden" />
 
-          <label>ទីតាំងរឿង
-            <select id="placement" class="admin-input" required>
-              <option value="web">🌐 រឿងខ្លី — ដាក់ក្នុង Web</option>
-              <option value="telegram">✈️ រឿងវែង — ដាក់ក្នុង Telegram</option>
-            </select>
-          </label>
+          <div class="status">🌐 រឿងទាំងអស់នឹងបង្ហាញនៅ Website។ អ្នកមើលត្រូវបង់ Bakong មុនចូលមើល Full Movie។</div>
 
           <label>ចំណងជើង<input id="title" class="admin-input" required placeholder="ឈ្មោះរឿង" /></label>
           <label>Preview / Description<textarea id="preview" class="admin-input admin-textarea" placeholder="អត្ថបទពិពណ៌នារឿង..."></textarea></label>
           <label>តម្លៃ (៛)<input id="price" class="admin-input" type="number" min="0" step="100" value="5000" required /></label>
 
           <div id="mediaUploadFields">
-            <label>Cover Image — ជ្រើសរូបពីម៉ាស៊ីន
+            <label>Cover Image
               <input id="coverFile" class="admin-input" type="file" accept="image/*" />
               <span id="coverStatus" class="muted">មិនទាន់ជ្រើសរូប</span>
             </label>
 
-            <label>Trailer Video — ជ្រើសវីដេអូ Trailer
+            <label>Trailer Video
               <input id="trailerFile" class="admin-input" type="file" accept="video/*" />
               <span id="trailerStatus" class="muted">មិនទាន់ជ្រើសវីដេអូ</span>
             </label>
 
-            <label id="fullMediaLabel">Full Video — សម្រាប់រឿងខ្លីក្នុង Web
+            <label>Full Movie — បើកមើលក្រោយបង់ប្រាក់
               <input id="fullFile" class="admin-input" type="file" accept="video/*" />
-              <span id="fullStatus" class="muted">មិនទាន់ជ្រើសវីដេអូពេញ</span>
+              <span id="fullStatus" class="muted">មិនទាន់ជ្រើស Full Movie</span>
             </label>
           </div>
 
-          <div id="telegramLargeMovieHelp" class="security-card" hidden>
-            <div class="security-icon">🎬</div>
+          <div class="security-card">
+            <div class="security-icon">🔐</div>
             <div>
-              <h3>Full Movie ធំៗ — Upload ក្នុង Telegram ដោយផ្ទាល់</h3>
-              <p>សម្រាប់រឿងវែង សូម Save រឿងនេះជាមុន។ បន្ទាប់មកចូល <strong>@iDramaAiBot</strong> → វាយ <strong>/adminmovies</strong> → ជ្រើសឈ្មោះរឿង → ផ្ញើ Full Movie ជា Video ឬ File មក Bot។ មិនចាំបាច់ Upload Full Movie ឆ្លងកាត់ Website/Render ទេ។</p>
+              <h3>បង់មុន • មើលក្រោយ</h3>
+              <p>Cover និង Trailer អាចមើលបានមុន។ Full Movie មិនត្រូវបានបង្ហាញសាធារណៈទេ។ បន្ទាប់ពី Bakong បញ្ជាក់ការបង់ជោគជ័យ Website នឹងបើក Watch Page ដោយស្វ័យប្រវត្តិ។</p>
             </div>
           </div>
 
-          <div id="placementHint" class="status">🌐 Web: Cover, Trailer និង Full Video អាច Upload ពី Admin ហើយរក្សាទុកក្នុង Telegram។</div>
-
           <div class="admin-actions">
-            <button class="primary-btn" type="submit">💾 រក្សាទុក</button>
+            <button class="primary-btn" type="submit">💾 Upload + រក្សាទុក</button>
             <button id="cancelEdit" class="ghost-btn" type="button" hidden>បោះបង់កែ</button>
           </div>
           <div id="formStatus" class="status" hidden></div>
@@ -90,16 +82,8 @@
       </section>
 
       <section class="section">
-        <div class="section-head"><div><div class="eyebrow">CATALOG</div><h2>រឿងទាំងអស់</h2></div><span id="adminCount" class="muted"></span></div>
+        <div class="section-head"><div><div class="eyebrow">WEB CATALOG</div><h2>រឿងទាំងអស់</h2></div><span id="adminCount" class="muted"></span></div>
         <div id="adminStories" class="admin-story-list"><div class="loading">កំពុងផ្ទុក…</div></div>
-      </section>
-
-      <section class="security-card">
-        <div class="security-icon">ℹ️</div>
-        <div>
-          <h3>របៀបដាក់រឿង</h3>
-          <p><strong>រឿងខ្លី:</strong> Web Admin → Cover + Trailer + Full Video។ <strong>រឿងវែង:</strong> Web Admin → Cover + Trailer + Save → Telegram Bot /adminmovies → ផ្ញើ Full Movie ធំៗដោយផ្ទាល់។</p>
-        </div>
       </section>
     </section>
   </main>
