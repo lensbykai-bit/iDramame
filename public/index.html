@@ -3,102 +3,133 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <meta name="theme-color" content="#09060d" />
-  <meta name="description" content="iDrama.ai — ទិញ និងមើលរឿងខ្លីតាម Website ជាមួយ Bakong KHQR" />
-  <title>iDrama.ai — Short Drama Store</title>
+  <meta name="theme-color" content="#080604" />
+  <meta name="description" content="iDrama.ai — ទិញរឿងភាគ មើល Trailer Free និង Unlock រឿងពេញដោយស្វ័យប្រវត្តិបន្ទាប់ពីទូទាត់ជោគជ័យ" />
+  <title>iDrama.ai — Premium Drama Cinema</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;600;700&family=Playfair+Display:wght@700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css" />
   <link rel="stylesheet" href="/brand.css" />
   <link rel="stylesheet" href="/store.css" />
   <link rel="stylesheet" href="/account.css" />
   <link rel="stylesheet" href="/phone-auth.css" />
   <link rel="stylesheet" href="/kantumruy.css" />
+  <link rel="stylesheet" href="/cinema.css" />
 </head>
 <body>
-  <div class="glow glow-a"></div><div class="glow glow-b"></div>
-
-  <header class="topbar">
-    <a class="brand" href="/" aria-label="iDrama.ai">
-      <span class="brand-mark">iD</span>
-      <span class="brand-khmer"><strong>iDrama.ai</strong></span>
+  <header class="cinema-header">
+    <a class="cinema-brand" href="#home" aria-label="iDrama.ai">
+      <span class="cinema-brand-mark">◉</span>
+      <span class="cinema-brand-copy"><strong>iDrama.ai</strong><small>PREMIUM CINEMA</small></span>
     </a>
 
-    <nav class="store-nav" aria-label="Main navigation">
-      <a href="#home">ទំព័រដើម</a>
-      <a href="#stories">រឿងខ្លី</a>
+    <nav class="cinema-nav" aria-label="Main navigation">
+      <a href="#home" class="active">ទំព័រដើម</a>
+      <a href="#stories">រឿងភាគ</a>
+      <a href="#popular">ពេញនិយម</a>
       <a href="#library">រឿងដែលបានទិញ</a>
     </nav>
 
-    <div class="top-actions">
-      <button id="accountBtn" class="account-btn" type="button">👤 ចូល / ចុះឈ្មោះ</button>
+    <div class="cinema-actions">
+      <a class="cinema-search-link" href="#stories" aria-label="Search">⌕</a>
+      <button id="accountBtn" class="account-btn cinema-account" type="button">👤 ចូល / ចុះឈ្មោះ</button>
     </div>
   </header>
 
-  <main>
-    <section id="home" class="hero">
-      <div class="hero-badge">🎬 SHORT DRAMA STORE • BAKONG KHQR</div>
-      <div class="eyebrow">iDrama.ai • WATCH ONLINE</div>
-      <h1>តោះមើលរឿងអេអាយ<br><span>ជាមួយខ្ញុំទាំងអស់គ្នា</span></h1>
-      <p>ជ្រើសរឿង → មើល Preview → Scan Bakong KHQR → ចុច “ខ្ញុំបានបង់រួច” → Admin ពិនិត្យ និង Approve → រឿងចូល My Library។</p>
+  <main class="cinema-main">
+    <section id="home" class="cinema-hero">
+      <div class="cinema-hero-bg"></div>
+      <div class="cinema-hero-shade"></div>
 
-      <div class="hero-actions">
-        <a class="primary-btn" href="#stories">🎬 មើលរឿងខ្លី</a>
-        <a class="secondary-btn" href="#library">📚 My Library</a>
+      <div class="cinema-hero-content">
+        <div class="cinema-kicker">IDRAMA ORIGINAL • PREMIUM DRAMA</div>
+        <h1>ទិញម្តង<br><span>បើកមើលរឿងពេញភ្លាម</span></h1>
+        <div class="cinema-meta"><span>★ Premium</span><span>HD</span><span>Khmer</span><span>Online</span><span class="cinema-age">16+</span></div>
+        <p>ជ្រើសរឿងដែលអ្នកចូលចិត្ត មើល Trailer ដោយឥតគិតថ្លៃ បន្ទាប់មកទូទាត់តាម Bakong KHQR។ ពេល Transaction ត្រូវបាន Verify ប្រព័ន្ធនឹង Unlock រឿងពេញ និងបញ្ចូលទៅ My Library ដោយស្វ័យប្រវត្តិ។</p>
+        <div class="cinema-hero-actions">
+          <a class="cinema-primary" href="#stories">🎬 ជ្រើសរឿងភាគ</a>
+          <a class="cinema-secondary" href="#library">▶ My Library</a>
+        </div>
+        <div class="cinema-trust">✓ Trailer Free &nbsp; · &nbsp; ✓ Bakong KHQR &nbsp; · &nbsp; ✓ Auto Unlock &nbsp; · &nbsp; ✓ Account Library</div>
       </div>
 
-      <div class="trust-row">
-        <span>🇰🇭 Bakong KHQR</span>
-        <span>🧾 Manual Confirm</span>
-        <span>🔐 Account Library</span>
-        <span>▶️ Watch Online</span>
-      </div>
-
-      <div class="step-row">
-        <div class="step-card"><div>①</div><strong>ជ្រើសរឿង</strong><span>មើល Cover, Preview និងតម្លៃ</span></div>
-        <div class="step-card"><div>②</div><strong>Login</strong><span>រក្សាការទិញជាប់ Account</span></div>
-        <div class="step-card"><div>③</div><strong>បង់ KHQR</strong><span>Scan ហើយចុច “ខ្ញុំបានបង់រួច”</span></div>
-        <div class="step-card"><div>④</div><strong>Admin Approve</strong><span>Admin ពិនិត្យមុនបើករឿងពេញ</span></div>
-      </div>
+      <aside class="cinema-flow-card">
+        <div class="cinema-flow-title">ទិញ និងមើលក្នុង 3 ជំហាន</div>
+        <div class="cinema-flow-step"><b>01</b><span><strong>ជ្រើសរឿង</strong><small>មើល Poster, Trailer និងតម្លៃ</small></span></div>
+        <div class="cinema-flow-step"><b>02</b><span><strong>ទូទាត់ KHQR</strong><small>Scan QR តាម App ធនាគារ/Bakong</small></span></div>
+        <div class="cinema-flow-step"><b>03</b><span><strong>Auto Unlock</strong><small>Verify ជោគជ័យ → រឿងពេញបើកភ្លាម</small></span></div>
+      </aside>
     </section>
 
-    <section id="stories" class="section">
-      <div class="section-head">
-        <div><div class="eyebrow">SHORT DRAMA CATALOG</div><h2>រឿងខ្លីទាំងអស់</h2></div>
-        <span id="storyCount" class="muted"></span>
+    <section class="cinema-status-strip" aria-label="Purchase flow">
+      <div><span class="cinema-status-icon">▶</span><p><strong>Trailer</strong><small>Preview Free</small></p></div>
+      <i>→</i>
+      <div><span class="cinema-status-icon locked">◆</span><p><strong>Full Story</strong><small>Locked មុនទិញ</small></p></div>
+      <i>→</i>
+      <div><span class="cinema-status-icon payment">▦</span><p><strong>Payment</strong><small>Auto Verify</small></p></div>
+      <i>→</i>
+      <div class="success"><span class="cinema-status-icon">✓</span><p><strong>Unlocked</strong><small>មើលរឿងពេញភ្លាម</small></p></div>
+    </section>
+
+    <section id="stories" class="cinema-section">
+      <div class="cinema-section-head">
+        <div><div class="cinema-kicker">EXPLORE DRAMAS</div><h2>រឿងភាគថ្មីៗ</h2></div>
+        <span id="storyCount" class="cinema-count"></span>
       </div>
 
-      <div class="store-toolbar">
-        <label class="search-box">
-          <span>🔎</span>
+      <div class="cinema-toolbar">
+        <label class="cinema-search-box">
+          <span>⌕</span>
           <input id="storySearch" type="search" autocomplete="off" placeholder="ស្វែងរកឈ្មោះរឿង..." aria-label="Search stories" />
         </label>
-        <span class="mini-note">Preview មើល Free • Full Story បង់មុន</span>
+        <span class="cinema-mini-note">Trailer Free • Full Story Unlock Auto បន្ទាប់ពីទូទាត់ជោគជ័យ</span>
       </div>
 
-      <div id="storyGrid" class="story-grid"><div class="loading">កំពុងផ្ទុករឿង…</div></div>
+      <div id="storyGrid" class="story-grid cinema-story-grid"><div class="loading">កំពុងផ្ទុករឿង…</div></div>
     </section>
 
-    <section id="library" class="section library-section">
-      <div class="section-head">
-        <div><div class="eyebrow">MY LIBRARY</div><h2>រឿងដែលបានទិញ</h2></div>
-        <span id="libraryMeta" class="muted">ត្រូវ Login ដើម្បីមើល</span>
+    <section id="popular" class="cinema-popular-section">
+      <div class="cinema-section-head">
+        <div><div class="cinema-kicker">TRENDING NOW</div><h2>ពេញនិយមនៅ iDrama.ai</h2></div>
       </div>
-      <div id="libraryGrid" class="library-grid"></div>
+      <div class="cinema-top-grid">
+        <div class="cinema-top-card"><b>01</b><span><strong>Romance</strong><small>រឿងស្នេហា</small></span></div>
+        <div class="cinema-top-card"><b>02</b><span><strong>Action</strong><small>សកម្មភាព</small></span></div>
+        <div class="cinema-top-card"><b>03</b><span><strong>Drama</strong><small>ជីវិត & គ្រួសារ</small></span></div>
+        <div class="cinema-top-card"><b>04</b><span><strong>Thriller</strong><small>អាថ៌កំបាំង</small></span></div>
+      </div>
     </section>
 
-    <section class="security-card">
-      <div class="security-icon">🔐</div>
+    <section id="library" class="cinema-section cinema-library-section">
+      <div class="cinema-section-head">
+        <div><div class="cinema-kicker">MY LIBRARY</div><h2>រឿងដែលបានទិញ</h2></div>
+        <span id="libraryMeta" class="cinema-count">ត្រូវ Login ដើម្បីមើល</span>
+      </div>
+      <div id="libraryGrid" class="library-grid cinema-library-grid"></div>
+    </section>
+
+    <section class="cinema-security-card">
+      <div class="cinema-security-icon">🔐</div>
       <div>
-        <h3>Bakong KHQR + Manual Admin Approval + Account Library</h3>
-        <p>ការទូទាត់មិន Unlock ដោយស្វ័យប្រវត្តិទេ។ បន្ទាប់ពីអ្នកបង់ និងផ្ញើ Order ឱ្យពិនិត្យ Admin ត្រូវ Approve មុនពេលរឿងពេញចូល My Library។</p>
+        <span class="cinema-kicker">PAYMENT & ACCESS</span>
+        <h3>Bakong KHQR + Auto Verification + Account Library</h3>
+        <p>Website ពិនិត្យ Transaction តាមប្រព័ន្ធ Payment។ ពេលបង់ជោគជ័យ រឿងពេញនឹងចូល My Library និងបើកមើលដោយស្វ័យប្រវត្តិ ដោយមិនចាំបាច់ឲ្យ Admin បើករាល់ Order។</p>
       </div>
     </section>
   </main>
 
-  <footer>© 2026 iDrama.ai • Short Drama Store • Cambodia</footer>
+  <footer class="cinema-footer">
+    <div class="cinema-footer-top">
+      <a class="cinema-brand" href="#home"><span class="cinema-brand-mark">◉</span><span class="cinema-brand-copy"><strong>iDrama.ai</strong><small>PREMIUM CINEMA</small></span></a>
+      <p>Buy once. Verify payment. Unlock full drama automatically.</p>
+    </div>
+    <div class="cinema-footer-bottom"><span>© 2026 iDrama.ai</span><span>Cambodia • Premium Drama Platform</span></div>
+  </footer>
 
   <div id="modal" class="modal" aria-hidden="true">
     <div class="modal-backdrop" data-close></div>
-    <div class="modal-card" role="dialog" aria-modal="true" aria-label="iDrama.ai dialog">
+    <div class="modal-card cinema-modal-card" role="dialog" aria-modal="true" aria-label="iDrama.ai dialog">
       <button class="close-btn" data-close aria-label="Close">×</button>
       <div id="modalBody"></div>
     </div>
@@ -106,7 +137,6 @@
 
   <script src="/supabase-config.js"></script>
   <script src="/app.js" defer></script>
-  <script src="/manual-payments.js" defer></script>
   <script src="/phone-auth.js" defer></script>
 </body>
 </html>
