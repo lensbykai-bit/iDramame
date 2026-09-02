@@ -10,11 +10,6 @@
     return `+855${digits}`;
   }
 
-  function displayPhone(phone) {
-    const normalized = normalizeCambodiaPhone(phone);
-    return normalized || String(phone || '');
-  }
-
   function isEmail(value) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || '').trim());
   }
@@ -33,24 +28,12 @@
     if (/phone.*disabled|sms.*disabled|provider.*disabled/i.test(text)) {
       return 'ការចុះឈ្មោះដោយលេខទូរស័ព្ទមិនទាន់បានបើកនៅ Supabase។ ត្រូវបើក Phone Auth និង SMS Provider ជាមុន។';
     }
-    if (/invalid login credentials/i.test(text)) {
-      return 'Email/លេខទូរស័ព្ទ ឬ Password មិនត្រឹមត្រូវ។';
-    }
-    if (/email not confirmed/i.test(text)) {
-      return 'សូមបញ្ជាក់ Email របស់អ្នកជាមុនសិន រួចចូលគណនីម្ដងទៀត។';
-    }
-    if (/phone not confirmed/i.test(text)) {
-      return 'លេខទូរស័ព្ទមិនទាន់បានបញ្ជាក់។ សូមបញ្ជាក់ OTP ជាមុនសិន។';
-    }
-    if (/token.*expired|otp.*expired/i.test(text)) {
-      return 'លេខកូដ OTP ផុតកំណត់។ សូមស្នើលេខកូដថ្មី។';
-    }
-    if (/invalid.*token|invalid.*otp|token.*invalid/i.test(text)) {
-      return 'លេខកូដ OTP មិនត្រឹមត្រូវ។ សូមពិនិត្យម្ដងទៀត។';
-    }
-    if (/user already registered/i.test(text)) {
-      return 'គណនីនេះមានរួចហើយ។ សូមចូលគណនី។';
-    }
+    if (/invalid login credentials/i.test(text)) return 'Email/លេខទូរស័ព្ទ ឬ Password មិនត្រឹមត្រូវ។';
+    if (/email not confirmed/i.test(text)) return 'សូមបញ្ជាក់ Email របស់អ្នកជាមុនសិន រួចចូលគណនីម្ដងទៀត។';
+    if (/phone not confirmed/i.test(text)) return 'លេខទូរស័ព្ទមិនទាន់បានបញ្ជាក់។ សូមបញ្ជាក់ OTP ជាមុនសិន។';
+    if (/token.*expired|otp.*expired/i.test(text)) return 'លេខកូដ OTP ផុតកំណត់។ សូមស្នើលេខកូដថ្មី។';
+    if (/invalid.*token|invalid.*otp|token.*invalid/i.test(text)) return 'លេខកូដ OTP មិនត្រឹមត្រូវ។ សូមពិនិត្យម្ដងទៀត។';
+    if (/user already registered/i.test(text)) return 'គណនីនេះមានរួចហើយ។ សូមចូលគណនី។';
     return text || `Account request failed (${status}).`;
   }
 
@@ -60,13 +43,9 @@
 
     const res = await fetch(`${url}/auth/v1/${path}`, {
       method: 'POST',
-      headers: {
-        apikey: key,
-        'Content-Type': 'application/json'
-      },
+      headers: { apikey: key, 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     });
-
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       const raw = data.msg || data.message || data.error_description || data.error;
@@ -75,27 +54,8 @@
     return data;
   }
 
-  function saveSession(data) {
+  function saveAuthSession(data) {
     if (data?.access_token) localStorage.setItem(SESSION_KEY, JSON.stringify(data));
-  }
-
-  function loadSavedIdentity() {
-    try {
-      const s = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
-      return s?.user?.email || s?.user?.phone || '';
-    } catch {
-      return '';
-    }
-  }
-
-  function refreshAccountButton() {
-    const btn = document.querySelector('#accountBtn');
-    if (!btn) return;
-    const identity = loadSavedIdentity();
-    if (!identity) return;
-    const label = identity.includes('@') ? identity.split('@')[0] : identity;
-    btn.textContent = `👤 ${label}`;
-    btn.classList.add('signed-in');
   }
 
   function setStatus(text, type = '') {
@@ -112,31 +72,31 @@
     const input = form.querySelector('#authEmail');
     if (!input) return;
 
-    document.querySelectorAll('.auth-method-tab').forEach(btn => {
+    form.querySelectorAll('.auth-method-tab').forEach(btn => {
       const active = btn.dataset.method === lastMethod;
       btn.classList.toggle('active', active);
       btn.setAttribute('aria-selected', active ? 'true' : 'false');
     });
 
-    const label = input.closest('label');
-    const labelText = label?.querySelector('.auth-field-title');
+    const title = input.closest('label')?.querySelector('.auth-field-title');
+    const help = form.querySelector('#authMethodHelp');
 
     if (lastMethod === 'phone') {
-      if (labelText) labelText.textContent = 'លេខទូរស័ព្ទ';
+      if (title) title.textContent = 'លេខទូរស័ព្ទ';
       input.type = 'tel';
       input.inputMode = 'tel';
       input.autocomplete = 'tel';
       input.placeholder = '012 345 678';
       input.setAttribute('aria-label', 'លេខទូរស័ព្ទកម្ពុជា');
-      document.querySelector('#authMethodHelp')?.replaceChildren(document.createTextNode('🇰🇭 ប្រើលេខកម្ពុជា ឧ. 012 345 678 — ប្រព័ន្ធបម្លែងទៅ +855 ដោយស្វ័យប្រវត្តិ។'));
+      if (help) help.textContent = '🇰🇭 ប្រើលេខកម្ពុជា ឧ. 012 345 678 — ប្រព័ន្ធបម្លែងទៅ +855 ដោយស្វ័យប្រវត្តិ។';
     } else {
-      if (labelText) labelText.textContent = 'Email';
+      if (title) title.textContent = 'Email';
       input.type = 'email';
       input.inputMode = 'email';
       input.autocomplete = 'email';
       input.placeholder = 'name@example.com';
       input.setAttribute('aria-label', 'Email');
-      document.querySelector('#authMethodHelp')?.replaceChildren(document.createTextNode('📧 ប្រើ Email ដែលអ្នកអាចទទួលសារបញ្ជាក់គណនីបាន។'));
+      if (help) help.textContent = '📧 ប្រើ Email ដែលអ្នកអាចទទួលសារបញ្ជាក់គណនីបាន។';
     }
 
     input.value = '';
@@ -151,10 +111,9 @@
     body.innerHTML = `
       <div class="eyebrow">PHONE VERIFICATION</div>
       <h2 class="modal-title">បញ្ជាក់លេខទូរស័ព្ទ</h2>
-      <p class="modal-preview">យើងបានផ្ញើលេខកូដ OTP ទៅ <strong>${displayPhone(phone)}</strong>។ សូមបញ្ចូលលេខកូដ 6 ខ្ទង់ខាងក្រោម។</p>
+      <p class="modal-preview">យើងបានផ្ញើលេខកូដ OTP ទៅ <strong>${phone}</strong>។ សូមបញ្ចូលលេខកូដ 6 ខ្ទង់ខាងក្រោម។</p>
       <form id="otpForm" class="auth-form otp-form">
-        <label>
-          <span class="auth-field-title">លេខកូដ OTP</span>
+        <label><span class="auth-field-title">លេខកូដ OTP</span>
           <input id="otpCode" class="otp-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="• • • • • •" required>
         </label>
         <button id="otpSubmit" class="buy-btn" type="submit">✅ បញ្ជាក់លេខទូរស័ព្ទ</button>
@@ -169,22 +128,20 @@
     const input = document.querySelector('#otpCode');
     const submit = document.querySelector('#otpSubmit');
 
-    form.onsubmit = async (e) => {
+    form.addEventListener('submit', async e => {
       e.preventDefault();
       const token = String(input.value || '').replace(/\D/g, '');
       if (token.length !== 6) {
         setStatus('សូមបញ្ចូល OTP 6 ខ្ទង់។', 'error');
         return;
       }
-
       submit.disabled = true;
-      submit.innerHTML = '<span class="spinner"></span>កំពុងបញ្ជាក់…';
+      submit.textContent = 'កំពុងបញ្ជាក់…';
       setStatus('⏳ កំពុងបញ្ជាក់លេខទូរស័ព្ទ…');
-
       try {
         const data = await authFetch('verify', { type: 'sms', phone, token });
         if (!data.access_token) throw new Error('បញ្ជាក់លេខទូរស័ព្ទមិនបានសម្រេច។');
-        saveSession(data);
+        saveAuthSession(data);
         setStatus('✅ បានបញ្ជាក់រួច! កំពុងចូល Account…', 'success');
         setTimeout(() => location.reload(), 350);
       } catch (err) {
@@ -192,10 +149,10 @@
         submit.disabled = false;
         submit.textContent = '✅ បញ្ជាក់លេខទូរស័ព្ទ';
       }
-    };
+    });
 
-    document.querySelector('#resendOtp').onclick = async () => {
-      const btn = document.querySelector('#resendOtp');
+    document.querySelector('#resendOtp')?.addEventListener('click', async e => {
+      const btn = e.currentTarget;
       btn.disabled = true;
       setStatus('⏳ កំពុងផ្ញើ OTP ថ្មី…');
       try {
@@ -206,26 +163,24 @@
       } finally {
         setTimeout(() => { btn.disabled = false; }, 1500);
       }
-    };
+    });
 
-    document.querySelector('#backToSignup').onclick = () => {
+    document.querySelector('#backToSignup')?.addEventListener('click', () => {
       if (typeof showAccountModal === 'function') showAccountModal('signup');
-    };
+    });
 
     setTimeout(() => input.focus(), 0);
   }
 
   async function handleSubmit(event) {
-    event?.preventDefault?.();
-    event?.stopPropagation?.();
-
+    event.preventDefault();
+    const form = event.currentTarget;
     const heading = document.querySelector('#modalBody .modal-title');
     const isSignup = heading?.textContent.includes('បង្កើតគណនី');
-    const form = document.querySelector('#authForm');
-    const identifierInput = document.querySelector('#authEmail');
-    const passwordInput = document.querySelector('#authPassword');
-    const submit = document.querySelector('#authSubmit');
-    if (!form || !identifierInput || !passwordInput || !submit) return false;
+    const identifierInput = form.querySelector('#authEmail');
+    const passwordInput = form.querySelector('#authPassword');
+    const submit = form.querySelector('#authSubmit');
+    if (!identifierInput || !passwordInput || !submit) return;
 
     const method = form.dataset.authMethod || lastMethod;
     const identifier = identifierInput.value.trim();
@@ -234,12 +189,12 @@
     if (!identifier) {
       setStatus(method === 'phone' ? 'សូមបញ្ចូលលេខទូរស័ព្ទ។' : 'សូមបញ្ចូល Email។', 'error');
       identifierInput.focus();
-      return false;
+      return;
     }
     if (password.length < 6) {
       setStatus('Password ត្រូវមានយ៉ាងហោច 6 តួអក្សរ។', 'error');
       passwordInput.focus();
-      return false;
+      return;
     }
 
     let body;
@@ -247,20 +202,20 @@
       if (!isPhone(identifier)) {
         setStatus('លេខទូរស័ព្ទមិនត្រឹមត្រូវ។ ឧ. 012 345 678', 'error');
         identifierInput.focus();
-        return false;
+        return;
       }
       body = { phone: normalizeCambodiaPhone(identifier), password };
     } else {
       if (!isEmail(identifier)) {
         setStatus('Email មិនត្រឹមត្រូវ។ ឧ. name@example.com', 'error');
         identifierInput.focus();
-        return false;
+        return;
       }
       body = { email: identifier.toLowerCase(), password };
     }
 
     submit.disabled = true;
-    submit.innerHTML = '<span class="spinner"></span>កំពុងដំណើរការ…';
+    submit.textContent = 'កំពុងដំណើរការ…';
     setStatus('⏳ កំពុងភ្ជាប់ Account…');
 
     try {
@@ -268,20 +223,20 @@
       const data = await authFetch(path, body);
 
       if (data.access_token) {
-        saveSession(data);
+        saveAuthSession(data);
         setStatus('✅ ជោគជ័យ! កំពុងចូល Account…', 'success');
         setTimeout(() => location.reload(), 350);
-        return false;
+        return;
       }
 
       if (isSignup && body.phone) {
         showPhoneOtp(body.phone);
-        return false;
+        return;
       }
 
       setStatus(
         isSignup
-          ? '✅ គណនីត្រូវបានបង្កើត។ សូមពិនិត្យ Email របស់អ្នក ដើម្បីបញ្ជាក់គណនី រួចចូលគណនី។'
+          ? '✅ គណនីត្រូវបានបង្កើត។ សូមពិនិត្យ Email ដើម្បីបញ្ជាក់គណនី រួចចូលគណនី។'
           : '✅ ដំណើរការជោគជ័យ។',
         'success'
       );
@@ -293,16 +248,18 @@
         submit.textContent = isSignup ? 'បង្កើតគណនី' : 'ចូលគណនី';
       }
     }
-
-    return false;
   }
 
   function enhanceAuthForm() {
     const form = document.querySelector('#authForm');
-    const input = document.querySelector('#authEmail');
-    const password = document.querySelector('#authPassword');
-    const submit = document.querySelector('#authSubmit');
-    if (!form || !input || !password || !submit) return;
+    if (!form || form.dataset.authEnhancedV2 === '1') return;
+
+    form.dataset.authEnhancedV2 = '1';
+
+    const input = form.querySelector('#authEmail');
+    const password = form.querySelector('#authPassword');
+    const submit = form.querySelector('#authSubmit');
+    if (!input || !password || !submit) return;
 
     const heading = document.querySelector('#modalBody .modal-title');
     const isSignup = heading?.textContent.includes('បង្កើតគណនី');
@@ -314,65 +271,72 @@
     }
 
     const label = input.closest('label');
-    if (label && !label.querySelector('.auth-field-title')) {
-      for (const node of [...label.childNodes]) {
+    if (label) {
+      [...label.childNodes].forEach(node => {
         if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) node.remove();
-      }
-      const span = document.createElement('span');
-      span.className = 'auth-field-title';
-      span.textContent = 'Email';
-      label.insertBefore(span, input);
-    }
-
-    if (!form.querySelector('.auth-method-tabs')) {
-      const tabs = document.createElement('div');
-      tabs.className = 'auth-method-tabs';
-      tabs.setAttribute('role', 'tablist');
-      tabs.innerHTML = `
-        <button class="auth-method-tab" type="button" data-method="email" role="tab">✉️ Email</button>
-        <button class="auth-method-tab" type="button" data-method="phone" role="tab">📱 លេខទូរស័ព្ទ</button>`;
-      form.insertBefore(tabs, form.firstChild);
-
-      const help = document.createElement('div');
-      help.id = 'authMethodHelp';
-      help.className = 'auth-method-help';
-      tabs.insertAdjacentElement('afterend', help);
-
-      tabs.addEventListener('click', e => {
-        const btn = e.target.closest('[data-method]');
-        if (!btn) return;
-        setMethod(form, btn.dataset.method);
       });
+      if (!label.querySelector('.auth-field-title')) {
+        const span = document.createElement('span');
+        span.className = 'auth-field-title';
+        span.textContent = 'Email';
+        label.insertBefore(span, input);
+      }
     }
+
+    const tabs = document.createElement('div');
+    tabs.className = 'auth-method-tabs';
+    tabs.setAttribute('role', 'tablist');
+    tabs.innerHTML = `
+      <button class="auth-method-tab" type="button" data-method="email" role="tab">✉️ Email</button>
+      <button class="auth-method-tab" type="button" data-method="phone" role="tab">📱 លេខទូរស័ព្ទ</button>`;
+    form.insertBefore(tabs, form.firstChild);
+
+    const help = document.createElement('div');
+    help.id = 'authMethodHelp';
+    help.className = 'auth-method-help';
+    tabs.insertAdjacentElement('afterend', help);
+
+    tabs.addEventListener('click', e => {
+      const btn = e.target.closest('[data-method]');
+      if (btn) setMethod(form, btn.dataset.method);
+    });
+
+    const switchBtn = document.querySelector('#authSwitch');
+    if (switchBtn) switchBtn.type = 'button';
 
     password.autocomplete = isSignup ? 'new-password' : 'current-password';
-    submit.textContent = isSignup ? 'បង្កើតគណនី' : 'ចូលគណនី';
 
-    form.onsubmit = handleSubmit;
-    submit.onclick = (e) => {
-      e.preventDefault();
-      handleSubmit(e);
-    };
+    form.onsubmit = null;
+    form.addEventListener('submit', handleSubmit);
 
-    if (!form.dataset.authEnhanced) {
-      form.dataset.authEnhanced = '1';
-      setMethod(form, lastMethod);
-    }
+    setMethod(form, lastMethod);
   }
 
-  const observer = new MutationObserver(() => {
-    enhanceAuthForm();
-    refreshAccountButton();
-  });
-  observer.observe(document.documentElement, { childList: true, subtree: true });
+  if (typeof renderAccount === 'function') {
+    renderAccount = function () {
+      const btn = document.querySelector('#accountBtn');
+      if (!btn) return;
+      const identity = currentUser?.email || currentUser?.phone || '';
+      if (identity) {
+        const label = identity.includes('@') ? identity.split('@')[0] : identity;
+        btn.textContent = `👤 ${label}`;
+        btn.classList.add('signed-in');
+      } else {
+        btn.textContent = '👤 ចូល / ចុះឈ្មោះ';
+        btn.classList.remove('signed-in');
+      }
+    };
+  }
+
+  const authModalBody = document.querySelector('#modalBody');
+  if (authModalBody) {
+    const observer = new MutationObserver(() => enhanceAuthForm());
+    observer.observe(authModalBody, { childList: true, subtree: true });
+  }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      enhanceAuthForm();
-      refreshAccountButton();
-    });
+    document.addEventListener('DOMContentLoaded', enhanceAuthForm, { once: true });
   } else {
     enhanceAuthForm();
-    refreshAccountButton();
   }
 })();
