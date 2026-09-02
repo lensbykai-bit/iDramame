@@ -48,21 +48,21 @@
   function friendlyError(raw, status) {
     const text = String(raw || '');
     if (/phone.*disabled|sms.*disabled|provider.*disabled/i.test(text)) {
-      return 'លេខទូរស័ព្ទមិនទាន់បានបើកនៅ Supabase។ ត្រូវបើក Phone Auth និង SMS Provider ជាមុន។';
+      return 'ការចុះឈ្មោះដោយលេខទូរស័ព្ទមិនទាន់អាចប្រើបានទេ។ សូមប្រើ Email ជាមុន។';
     }
     if (/invalid login credentials/i.test(text)) return 'Email/លេខទូរស័ព្ទ ឬ Password មិនត្រឹមត្រូវ។';
     if (/email not confirmed/i.test(text)) return 'សូមបញ្ជាក់ Email របស់អ្នកជាមុនសិន។';
-    if (/phone not confirmed/i.test(text)) return 'លេខទូរស័ព្ទមិនទាន់បានបញ្ជាក់។ សូមបញ្ជាក់ OTP ជាមុនសិន។';
+    if (/phone not confirmed/i.test(text)) return 'លេខទូរស័ព្ទមិនទាន់បានបញ្ជាក់។ សូមបញ្ចូល OTP ជាមុនសិន។';
     if (/token.*expired|otp.*expired/i.test(text)) return 'លេខកូដ OTP ផុតកំណត់។ សូមស្នើលេខកូដថ្មី។';
     if (/invalid.*token|invalid.*otp|token.*invalid/i.test(text)) return 'លេខកូដ OTP មិនត្រឹមត្រូវ។';
     if (/user already registered/i.test(text)) return 'គណនីនេះមានរួចហើយ។ សូមចូលគណនី។';
     if (/password.*short|password.*characters/i.test(text)) return 'Password ត្រូវមានយ៉ាងហោច 6 តួអក្សរ។';
-    return text || `Account request failed (${status}).`;
+    return text || `មិនអាចដំណើរការគណនីបាន (${status})។ សូមព្យាយាមម្តងទៀត។`;
   }
 
   async function authPost(path, body, token = '') {
     const { url, key } = config();
-    if (!url || !key) throw new Error('Account service មិនទាន់បានភ្ជាប់។');
+    if (!url || !key) throw new Error('ប្រព័ន្ធគណនីមិនទាន់រួចរាល់។ សូមព្យាយាមពេលក្រោយ។');
 
     const headers = { apikey: key, 'Content-Type': 'application/json' };
     if (token) headers.Authorization = `Bearer ${token}`;
@@ -81,10 +81,6 @@
   }
 
   function openModalSafe() {
-    if (typeof window.openModal === 'function') {
-      window.openModal();
-      return;
-    }
     const modal = $('#modal');
     if (!modal) return;
     modal.classList.add('open');
@@ -93,10 +89,6 @@
   }
 
   function closeModalSafe() {
-    if (typeof window.closeModal === 'function') {
-      window.closeModal();
-      return;
-    }
     const modal = $('#modal');
     if (!modal) return;
     modal.classList.remove('open');
@@ -107,8 +99,16 @@
   function setStatus(text, type = '') {
     const status = $('#authStatus');
     if (!status) return;
-    status.className = `status auth-status ${type}`.trim();
+    status.hidden = false;
+    status.className = `auth-status-message ${type}`.trim();
     status.textContent = text;
+  }
+
+  function clearStatus() {
+    const status = $('#authStatus');
+    if (!status) return;
+    status.hidden = true;
+    status.textContent = '';
   }
 
   function syncAccountButton() {
@@ -131,6 +131,21 @@
     location.reload();
   }
 
+  function addPasswordToggle() {
+    const password = $('#stablePassword');
+    const toggle = $('#stablePasswordToggle');
+    if (!password || !toggle) return;
+
+    toggle.addEventListener('click', () => {
+      const show = password.type === 'password';
+      password.type = show ? 'text' : 'password';
+      toggle.textContent = show ? '🙈' : '👁️';
+      toggle.setAttribute('aria-label', show ? 'លាក់ Password' : 'បង្ហាញ Password');
+      toggle.setAttribute('aria-pressed', show ? 'true' : 'false');
+      password.focus({ preventScroll: true });
+    });
+  }
+
   function renderAccountView() {
     const body = $('#modalBody');
     const session = getSession();
@@ -138,14 +153,16 @@
     if (!body) return;
 
     body.innerHTML = `
-      <div class="eyebrow">MY ACCOUNT</div>
-      <h2 class="modal-title">គណនីរបស់ខ្ញុំ</h2>
-      <div class="account-card">
-        <div class="account-avatar">👤</div>
-        <div><strong>${escapeHtml(identity)}</strong><p>រឿងដែលអ្នកបានទិញត្រូវបានរក្សាទុកក្នុង My Library។</p></div>
-      </div>
-      <button id="stableLibraryBtn" class="buy-btn" type="button" style="width:100%;margin-top:14px">📚 មើលរឿងដែលបានទិញ</button>
-      <button id="stableLogoutBtn" class="secondary-btn auth-wide" type="button">ចាកចេញ</button>`;
+      <div class="auth-shell auth-account-shell">
+        <div class="auth-brandline">IDRAMA.AI ACCOUNT</div>
+        <h2 class="auth-title">គណនីរបស់ខ្ញុំ</h2>
+        <div class="account-card auth-account-card">
+          <div class="account-avatar">👤</div>
+          <div><strong>${escapeHtml(identity)}</strong><p>រឿងដែលអ្នកបានទិញត្រូវបានរក្សាទុកក្នុង My Library។</p></div>
+        </div>
+        <button id="stableLibraryBtn" class="auth-primary-btn" type="button">📚 មើលរឿងដែលបានទិញ</button>
+        <button id="stableLogoutBtn" class="auth-secondary-btn" type="button">ចាកចេញ</button>
+      </div>`;
 
     openModalSafe();
     $('#stableLibraryBtn')?.addEventListener('click', () => {
@@ -160,19 +177,22 @@
     if (!body) return;
 
     body.innerHTML = `
-      <div class="eyebrow">PHONE VERIFICATION</div>
-      <h2 class="modal-title">បញ្ជាក់លេខទូរស័ព្ទ</h2>
-      <p class="modal-preview">លេខកូដ OTP ត្រូវបានផ្ញើទៅ <strong>${escapeHtml(phone)}</strong>។</p>
-      <form id="stableOtpForm" class="auth-form otp-form">
-        <label><span class="auth-field-title">លេខកូដ OTP 6 ខ្ទង់</span>
-          <input id="stableOtp" class="otp-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="• • • • • •" required>
-        </label>
-        <button id="stableOtpSubmit" class="buy-btn" type="submit">បញ្ជាក់លេខទូរស័ព្ទ</button>
-      </form>
-      <div id="authStatus" class="status auth-status">📱 សូមបញ្ចូល OTP ដែលអ្នកទទួលបានតាម SMS។</div>
-      <div class="otp-actions">
-        <button id="stableResendOtp" class="text-btn" type="button">ផ្ញើ OTP ម្តងទៀត</button>
-        <button id="stableBackSignup" class="text-btn" type="button">← ត្រឡប់ទៅចុះឈ្មោះ</button>
+      <div class="auth-shell">
+        <div class="auth-brandline">PHONE VERIFICATION</div>
+        <h2 class="auth-title">បញ្ជាក់លេខទូរស័ព្ទ</h2>
+        <p class="auth-subtitle">យើងបានផ្ញើលេខកូដ OTP ទៅ <strong>${escapeHtml(phone)}</strong>។</p>
+        <form id="stableOtpForm" class="auth-form premium-auth-form">
+          <label class="auth-field">
+            <span class="auth-field-title">លេខកូដ OTP 6 ខ្ទង់</span>
+            <input id="stableOtp" class="otp-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="• • • • • •" required>
+          </label>
+          <button id="stableOtpSubmit" class="auth-primary-btn" type="submit">បញ្ជាក់លេខទូរស័ព្ទ</button>
+        </form>
+        <div id="authStatus" class="auth-status-message" hidden></div>
+        <div class="otp-actions">
+          <button id="stableResendOtp" class="auth-link-btn" type="button">ផ្ញើ OTP ម្តងទៀត</button>
+          <button id="stableBackSignup" class="auth-link-btn" type="button">← ត្រឡប់ទៅចុះឈ្មោះ</button>
+        </div>
       </div>`;
 
     $('#stableOtpForm')?.addEventListener('submit', async event => {
@@ -187,7 +207,7 @@
       }
       submit.disabled = true;
       submit.textContent = 'កំពុងបញ្ជាក់…';
-      setStatus('⏳ កំពុងបញ្ជាក់លេខទូរស័ព្ទ…');
+      setStatus('កំពុងបញ្ជាក់លេខទូរស័ព្ទ…');
       try {
         const data = await authPost('verify', { type: 'sms', phone, token });
         if (!data.access_token) throw new Error('មិនអាចបញ្ជាក់លេខទូរស័ព្ទបាន។');
@@ -204,7 +224,7 @@
     $('#stableResendOtp')?.addEventListener('click', async event => {
       const button = event.currentTarget;
       button.disabled = true;
-      setStatus('⏳ កំពុងផ្ញើ OTP ថ្មី…');
+      setStatus('កំពុងផ្ញើ OTP ថ្មី…');
       try {
         await authPost('otp', { phone, create_user: false });
         setStatus('✅ បានផ្ញើ OTP ថ្មី។', 'success');
@@ -225,73 +245,99 @@
 
     const signup = mode === 'signup';
     const phoneMode = method === 'phone';
+    const heading = signup ? 'បង្កើតគណនី' : 'ចូលគណនី';
 
     body.innerHTML = `
-      <div class="eyebrow">IDRAMA.AI ACCOUNT</div>
-      <h2 class="modal-title">${signup ? 'បង្កើតគណនី' : 'ចូលគណនី'}</h2>
-      <p class="modal-preview">${signup ? 'បង្កើតគណនី' : 'ចូលគណនី'}ដោយ Email ឬលេខទូរស័ព្ទ ដើម្បីរក្សា និងមើលរឿងដែលបានទិញ។</p>
-      <div class="auth-method-tabs" role="tablist">
-        <button id="stableEmailTab" class="auth-method-tab ${phoneMode ? '' : 'active'}" type="button" role="tab" aria-selected="${phoneMode ? 'false' : 'true'}">✉️ Email</button>
-        <button id="stablePhoneTab" class="auth-method-tab ${phoneMode ? 'active' : ''}" type="button" role="tab" aria-selected="${phoneMode ? 'true' : 'false'}">📱 លេខទូរស័ព្ទ</button>
-      </div>
-      <div class="auth-method-help">${phoneMode ? '🇰🇭 ឧ. 012 345 678 — ប្រព័ន្ធបម្លែងទៅ +855 ដោយស្វ័យប្រវត្តិ។' : '📧 ប្រើ Email ដែលអ្នកអាចទទួលសារបញ្ជាក់គណនីបាន។'}</div>
-      <form id="stableAuthForm" class="auth-form">
-        <label><span class="auth-field-title">${phoneMode ? 'លេខទូរស័ព្ទ' : 'Email'}</span>
-          <input id="stableIdentifier" type="${phoneMode ? 'tel' : 'email'}" inputmode="${phoneMode ? 'tel' : 'email'}" autocomplete="${phoneMode ? 'tel' : 'email'}" placeholder="${phoneMode ? '012 345 678' : 'name@example.com'}" required>
-        </label>
-        <label><span class="auth-field-title">Password</span>
-          <input id="stablePassword" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" minlength="6" placeholder="យ៉ាងហោច 6 តួអក្សរ" required>
-        </label>
-        <button id="stableAuthSubmit" class="buy-btn" type="submit">${signup ? 'បង្កើតគណនី' : 'ចូលគណនី'}</button>
-      </form>
-      <div id="authStatus" class="status auth-status">🔐 Password ត្រូវបានគ្រប់គ្រងដោយ Supabase Auth។</div>
-      <button id="stableAuthSwitch" class="text-btn" type="button">${signup ? 'មានគណនីរួច? ចូលគណនី' : 'មិនទាន់មានគណនី? ចុះឈ្មោះ'}</button>`;
+      <div class="auth-shell">
+        <div class="auth-brandline">IDRAMA.AI ACCOUNT</div>
+        <h2 class="auth-title">${heading}</h2>
+        <p class="auth-subtitle">${heading}ដោយ Email ឬលេខទូរស័ព្ទ ដើម្បីរក្សា និងមើលរឿងដែលបានទិញក្នុង My Library។</p>
+
+        <div class="auth-method-tabs" role="tablist" aria-label="ជ្រើសរើសវិធីចូលគណនី">
+          <button id="stableEmailTab" class="auth-method-tab ${phoneMode ? '' : 'active'}" type="button" role="tab" aria-selected="${phoneMode ? 'false' : 'true'}"><span>✉️</span> Email</button>
+          <button id="stablePhoneTab" class="auth-method-tab ${phoneMode ? 'active' : ''}" type="button" role="tab" aria-selected="${phoneMode ? 'true' : 'false'}"><span>📱</span> លេខទូរស័ព្ទ</button>
+        </div>
+
+        <div class="auth-method-help">${phoneMode ? '🇰🇭 ប្រើលេខកម្ពុជា ឧ. 012 345 678 — ប្រព័ន្ធបម្លែងទៅ +855 ដោយស្វ័យប្រវត្តិ។' : '✉️ ប្រើ Email ដែលអ្នកអាចទទួលសារបញ្ជាក់គណនីបាន។'}</div>
+
+        <form id="stableAuthForm" class="auth-form premium-auth-form">
+          <label class="auth-field">
+            <span class="auth-field-title">${phoneMode ? 'លេខទូរស័ព្ទ' : 'Email'}</span>
+            <div class="auth-input-wrap">
+              <span class="auth-input-icon">${phoneMode ? '📱' : '✉️'}</span>
+              <input id="stableIdentifier" type="${phoneMode ? 'tel' : 'email'}" inputmode="${phoneMode ? 'tel' : 'email'}" autocomplete="${phoneMode ? 'tel' : 'email'}" placeholder="${phoneMode ? '012 345 678' : 'name@example.com'}" required>
+            </div>
+          </label>
+
+          <label class="auth-field">
+            <span class="auth-field-title">Password</span>
+            <div class="auth-input-wrap password-input-wrap">
+              <span class="auth-input-icon">🔒</span>
+              <input id="stablePassword" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" minlength="6" placeholder="យ៉ាងហោច 6 តួអក្សរ" required>
+              <button id="stablePasswordToggle" class="password-toggle" type="button" aria-label="បង្ហាញ Password" aria-pressed="false">👁️</button>
+            </div>
+          </label>
+
+          <button id="stableSubmit" class="auth-primary-btn" type="submit">${heading}</button>
+        </form>
+
+        <div id="authStatus" class="auth-status-message" hidden></div>
+
+        <div class="auth-switch-row">
+          <span>${signup ? 'មានគណនីរួច?' : 'មិនទាន់មានគណនី?'}</span>
+          <button id="stableModeSwitch" class="auth-switch-btn" type="button">${signup ? 'ចូលគណនី' : 'ចុះឈ្មោះ'}</button>
+        </div>
+      </div>`;
 
     openModalSafe();
+    clearStatus();
+    addPasswordToggle();
 
     $('#stableEmailTab')?.addEventListener('click', () => renderAuth(mode, 'email'), { once: true });
     $('#stablePhoneTab')?.addEventListener('click', () => renderAuth(mode, 'phone'), { once: true });
-    $('#stableAuthSwitch')?.addEventListener('click', () => renderAuth(signup ? 'login' : 'signup', method), { once: true });
+    $('#stableModeSwitch')?.addEventListener('click', () => renderAuth(signup ? 'login' : 'signup', method), { once: true });
 
     $('#stableAuthForm')?.addEventListener('submit', async event => {
       event.preventDefault();
       const identifierInput = $('#stableIdentifier');
       const passwordInput = $('#stablePassword');
-      const submit = $('#stableAuthSubmit');
+      const submit = $('#stableSubmit');
       const identifier = String(identifierInput?.value || '').trim();
       const password = String(passwordInput?.value || '');
 
       if (phoneMode) {
         if (!validPhone(identifier)) {
-          setStatus('លេខទូរស័ព្ទមិនត្រឹមត្រូវ។ ឧ. 012 345 678', 'error');
+          setStatus('❌ លេខទូរស័ព្ទមិនត្រឹមត្រូវ។ ឧ. 012 345 678', 'error');
           identifierInput?.focus();
           return;
         }
       } else if (!validEmail(identifier)) {
-        setStatus('Email មិនត្រឹមត្រូវ។ ឧ. name@example.com', 'error');
+        setStatus('❌ Email មិនត្រឹមត្រូវ។ ឧ. name@example.com', 'error');
         identifierInput?.focus();
         return;
       }
 
       if (password.length < 6) {
-        setStatus('Password ត្រូវមានយ៉ាងហោច 6 តួអក្សរ។', 'error');
+        setStatus('❌ Password ត្រូវមានយ៉ាងហោច 6 តួអក្សរ។', 'error');
         passwordInput?.focus();
         return;
       }
+
+      submit.disabled = true;
+      submit.textContent = 'កំពុងដំណើរការ…';
+      setStatus('កំពុងដំណើរការ…');
 
       const credentials = phoneMode
         ? { phone: normalizePhone(identifier), password }
         : { email: identifier.toLowerCase(), password };
 
-      submit.disabled = true;
-      submit.textContent = 'កំពុងដំណើរការ…';
-      setStatus('⏳ កំពុងភ្ជាប់ Account…');
-
       try {
-        const data = await authPost(signup ? 'signup' : 'token?grant_type=password', credentials);
+        const path = signup ? 'signup' : 'token?grant_type=password';
+        const data = await authPost(path, credentials);
+
         if (data.access_token) {
           saveSession(data);
-          setStatus('✅ ជោគជ័យ។ កំពុងចូល Account…', 'success');
+          setStatus('✅ ជោគជ័យ! កំពុងបើកគណនី…', 'success');
           setTimeout(() => location.reload(), 350);
           return;
         }
@@ -302,16 +348,16 @@
         }
 
         if (signup) {
-          setStatus('✅ គណនីត្រូវបានបង្កើត។ សូមពិនិត្យ Email ដើម្បីបញ្ជាក់គណនី រួចចូលគណនី។', 'success');
+          setStatus('✅ គណនីត្រូវបានបង្កើត។ សូមពិនិត្យ Email ដើម្បីបញ្ជាក់គណនី។', 'success');
         } else {
-          setStatus('✅ ចូលគណនីបានជោគជ័យ។', 'success');
+          setStatus('✅ ដំណើរការជោគជ័យ។', 'success');
         }
       } catch (error) {
         setStatus(`❌ ${error.message}`, 'error');
       } finally {
         if (document.body.contains(submit)) {
           submit.disabled = false;
-          submit.textContent = signup ? 'បង្កើតគណនី' : 'ចូលគណនី';
+          submit.textContent = heading;
         }
       }
     });
@@ -319,34 +365,15 @@
     setTimeout(() => $('#stableIdentifier')?.focus(), 0);
   }
 
-  function showStableAccountModal(defaultMode = 'login') {
+  function showStableAccountModal(mode = 'login') {
     if (getSession()) renderAccountView();
-    else renderAuth(defaultMode === 'signup' ? 'signup' : 'login', 'email');
+    else renderAuth(mode, 'email');
   }
 
-  // Replace the old global account modal function used by app.js.
-  window.showAccountModal = showStableAccountModal;
-
-  // Keep the account label correct for both email and phone accounts.
-  if (typeof window.renderAccount === 'function') {
-    window.renderAccount = function renderAccountStable() {
-      const button = $('#accountBtn');
-      if (!button) return;
-      const identity = window.currentUser?.email || window.currentUser?.phone || getSession()?.user?.email || getSession()?.user?.phone || '';
-      if (identity) {
-        const label = identity.includes('@') ? identity.split('@')[0] : identity;
-        button.textContent = `👤 ${label}`;
-        button.classList.add('signed-in');
-      } else {
-        button.textContent = '👤 ចូល / ចុះឈ្មោះ';
-        button.classList.remove('signed-in');
-      }
-    };
-  }
-
-  // Capture auth-related clicks before the old app.js handlers can open the legacy form.
   document.addEventListener('click', event => {
-    const target = event.target.closest('#accountBtn, #libraryLoginBtn, #buyBtn');
+    const rawTarget = event.target;
+    if (!(rawTarget instanceof Element)) return;
+    const target = rawTarget.closest('#accountBtn, #libraryLoginBtn, #buyBtn');
     if (!target) return;
 
     const needsLoginBuy = target.id === 'buyBtn' && !getSession();
@@ -358,7 +385,6 @@
     showStableAccountModal('login');
   }, true);
 
-  // Run once only. No MutationObserver, no polling, no DOM loop.
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', syncAccountButton, { once: true });
   } else {
