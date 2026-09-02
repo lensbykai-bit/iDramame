@@ -3,6 +3,7 @@ services:
     name: idramaai
     runtime: node
     plan: free
+    autoDeployTrigger: commit
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /health
@@ -40,7 +41,7 @@ services:
       - key: BAKONG_MOBILE_NUMBER
         sync: false
 
-      # Bakong Open API token is kept server-side. Customer checkout does not auto-approve.
+      # Bakong Open API token is kept server-side.
       - key: BAKONG_API_BASE_URL
         value: https://api-bakong.nbc.gov.kh
       - key: BAKONG_TOKEN
