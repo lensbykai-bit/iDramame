@@ -45,15 +45,18 @@
     }[ch]));
   }
 
+  function displayIdentity(user) {
+    const metadataPhone = user?.user_metadata?.login_phone || user?.user_metadata?.display_phone || '';
+    if (metadataPhone) return metadataPhone;
+    if (user?.phone) return user.phone;
+    return user?.email || '';
+  }
+
   function friendlyError(raw, status) {
     const text = String(raw || '');
-    if (/phone.*disabled|sms.*disabled|provider.*disabled/i.test(text)) return 'ការចុះឈ្មោះដោយលេខទូរស័ព្ទមិនទាន់អាចប្រើបានទេ។ សូមប្រើ Email ជាមុន។';
-    if (/invalid login credentials/i.test(text)) return 'Email/លេខទូរស័ព្ទ ឬ Password មិនត្រឹមត្រូវ។';
+    if (/already|registered|exists/i.test(text)) return 'គណនីនេះមានរួចហើយ។ សូមចូលគណនី។';
+    if (/invalid login credentials|invalid.*credentials/i.test(text)) return 'គណនី ឬ Password មិនត្រឹមត្រូវ។';
     if (/email not confirmed/i.test(text)) return 'សូមបញ្ជាក់ Email របស់អ្នកជាមុនសិន។';
-    if (/phone not confirmed/i.test(text)) return 'លេខទូរស័ព្ទមិនទាន់បានបញ្ជាក់។ សូមបញ្ចូល OTP ជាមុនសិន។';
-    if (/token.*expired|otp.*expired/i.test(text)) return 'លេខកូដ OTP ផុតកំណត់។ សូមស្នើលេខកូដថ្មី។';
-    if (/invalid.*token|invalid.*otp|token.*invalid/i.test(text)) return 'លេខកូដ OTP មិនត្រឹមត្រូវ។';
-    if (/user already registered/i.test(text)) return 'គណនីនេះមានរួចហើយ។ សូមចូលគណនី។';
     if (/password.*short|password.*characters/i.test(text)) return 'Password ត្រូវមានយ៉ាងហោច 6 តួអក្សរ។';
     return text || `មិនអាចដំណើរការគណនីបាន (${status})។ សូមព្យាយាមម្តងទៀត។`;
   }
@@ -78,6 +81,22 @@
     return data;
   }
 
+  async function phoneAuthPost(action, phone, password) {
+    const { url, key } = config();
+    if (!url || !key) throw new Error('ប្រព័ន្ធគណនីមិនទាន់រួចរាល់។ សូមព្យាយាមពេលក្រោយ។');
+
+    const response = await fetch(`${url}/functions/v1/idrama-phone-auth`, {
+      method: 'POST',
+      headers: { apikey: key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, phone, password })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || !data.session?.access_token) {
+      throw new Error(data.error || 'មិនអាចដំណើរការគណនីបាន។ សូមព្យាយាមម្តងទៀត។');
+    }
+    return data.session;
+  }
+
   function modalCard() {
     return $('#modal .cinema-modal-card');
   }
@@ -99,7 +118,7 @@
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
-    requestAnimationFrame(() => resetModalScroll());
+    requestAnimationFrame(resetModalScroll);
   }
 
   function closeModalSafe() {
@@ -126,19 +145,27 @@
     status.textContent = '';
   }
 
-  function syncAccountButton() {
-    const button = $('#accountBtn');
-    if (!button) return;
+  function syncPhoneUi() {
     const session = getSession();
-    const identity = session?.user?.email || session?.user?.phone || '';
-    if (!identity) {
-      button.textContent = '👤 ចូល / ចុះឈ្មោះ';
-      button.classList.remove('signed-in');
-      return;
+    const identity = displayIdentity(session?.user);
+    const button = $('#accountBtn');
+
+    if (button) {
+      if (identity) {
+        const label = identity.includes('@') ? identity.split('@')[0] : identity;
+        button.textContent = `👤 ${label}`;
+        button.classList.add('signed-in');
+      } else {
+        button.textContent = '👤 ចូល / ចុះឈ្មោះ';
+        button.classList.remove('signed-in');
+      }
     }
-    const label = identity.includes('@') ? identity.split('@')[0] : identity;
-    button.textContent = `👤 ${label}`;
-    button.classList.add('signed-in');
+
+    const phone = session?.user?.user_metadata?.login_phone || session?.user?.user_metadata?.display_phone || '';
+    const meta = $('#libraryMeta');
+    if (phone && meta && /@accounts\.idrama\.ai|Account Library/i.test(meta.textContent || '')) {
+      meta.textContent = phone;
+    }
   }
 
   async function signOutStable() {
@@ -168,7 +195,7 @@
   function renderAccountView() {
     const body = $('#modalBody');
     const session = getSession();
-    const identity = session?.user?.email || session?.user?.phone || 'Account';
+    const identity = displayIdentity(session?.user) || 'Account';
     if (!body) return;
 
     body.innerHTML = `
@@ -188,81 +215,9 @@
     $('#stableLibraryBtn')?.addEventListener('click', () => {
       closeModalSafe();
       location.hash = '#library';
+      setTimeout(syncPhoneUi, 250);
     }, { once: true });
     $('#stableLogoutBtn')?.addEventListener('click', signOutStable, { once: true });
-  }
-
-  function renderOtp(phone) {
-    const body = $('#modalBody');
-    if (!body) return;
-
-    body.innerHTML = `
-      <div class="auth-shell">
-        <div class="auth-brandline">PHONE VERIFICATION</div>
-        <h2 class="auth-title">បញ្ជាក់លេខទូរស័ព្ទ</h2>
-        <p class="auth-subtitle">OTP ត្រូវបានផ្ញើទៅ <strong>${escapeHtml(phone)}</strong>។</p>
-        <form id="stableOtpForm" class="auth-form premium-auth-form">
-          <label class="auth-field">
-            <span class="auth-field-title">លេខកូដ OTP 6 ខ្ទង់</span>
-            <div class="auth-input-wrap">
-              <span class="auth-input-icon">🔢</span>
-              <input id="stableOtp" class="otp-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="• • • • • •" required>
-            </div>
-          </label>
-          <button id="stableOtpSubmit" class="auth-primary-btn" type="submit">បញ្ជាក់លេខទូរស័ព្ទ</button>
-        </form>
-        <div id="authStatus" class="auth-status-message" hidden></div>
-        <div class="otp-actions">
-          <button id="stableResendOtp" class="auth-link-btn" type="button">ផ្ញើ OTP ម្តងទៀត</button>
-          <button id="stableBackSignup" class="auth-link-btn" type="button">← ត្រឡប់</button>
-        </div>
-      </div>`;
-
-    openModalSafe();
-    resetModalScroll();
-
-    $('#stableOtpForm')?.addEventListener('submit', async event => {
-      event.preventDefault();
-      const input = $('#stableOtp');
-      const submit = $('#stableOtpSubmit');
-      const token = String(input?.value || '').replace(/\D/g, '');
-      if (token.length !== 6) {
-        setStatus('សូមបញ្ចូល OTP 6 ខ្ទង់។', 'error');
-        safeFocus(input);
-        return;
-      }
-      submit.disabled = true;
-      submit.textContent = 'កំពុងបញ្ជាក់…';
-      setStatus('កំពុងបញ្ជាក់…');
-      try {
-        const data = await authPost('verify', { type: 'sms', phone, token });
-        if (!data.access_token) throw new Error('មិនអាចបញ្ជាក់លេខទូរស័ព្ទបាន។');
-        saveSession(data);
-        setStatus('✅ បានបញ្ជាក់រួច។', 'success');
-        setTimeout(() => location.reload(), 350);
-      } catch (error) {
-        setStatus(`❌ ${error.message}`, 'error');
-        submit.disabled = false;
-        submit.textContent = 'បញ្ជាក់លេខទូរស័ព្ទ';
-      }
-    });
-
-    $('#stableResendOtp')?.addEventListener('click', async event => {
-      const button = event.currentTarget;
-      button.disabled = true;
-      setStatus('កំពុងផ្ញើ OTP ថ្មី…');
-      try {
-        await authPost('otp', { phone, create_user: false });
-        setStatus('✅ បានផ្ញើ OTP ថ្មី។', 'success');
-      } catch (error) {
-        setStatus(`❌ ${error.message}`, 'error');
-      } finally {
-        setTimeout(() => { button.disabled = false; }, 1200);
-      }
-    });
-
-    $('#stableBackSignup')?.addEventListener('click', () => renderAuth('signup', 'phone'), { once: true });
-    setTimeout(() => safeFocus($('#stableOtp')), 30);
   }
 
   function renderAuth(mode = 'login', method = 'email') {
@@ -273,6 +228,9 @@
     const phoneMode = method === 'phone';
     const heading = signup ? 'បង្កើតគណនី' : 'ចូលគណនី';
     const subtitle = signup ? 'បង្កើតគណនីសម្រាប់ My Library។' : 'ចូលគណនីដើម្បីបើក My Library។';
+    const help = phoneMode
+      ? '🇰🇭 ប្រើលេខទូរស័ព្ទកម្ពុជា + Password — មិនត្រូវការ OTP។'
+      : '✉️ ប្រើ Email របស់អ្នកដើម្បីចូលគណនី។';
 
     body.innerHTML = `
       <div class="auth-shell">
@@ -285,7 +243,7 @@
           <button id="stablePhoneTab" class="auth-method-tab ${phoneMode ? 'active' : ''}" type="button" role="tab" aria-selected="${phoneMode ? 'true' : 'false'}"><span>📱</span>លេខទូរស័ព្ទ</button>
         </div>
 
-        <div class="auth-method-help">${phoneMode ? '🇰🇭 ឧ. 012 345 678 — បម្លែងជា +855 ដោយស្វ័យប្រវត្តិ។' : '✉️ ប្រើ Email ដែលអាចទទួលសារបញ្ជាក់បាន។'}</div>
+        <div class="auth-method-help">${help}</div>
 
         <form id="stableAuthForm" class="auth-form premium-auth-form">
           <label class="auth-field">
@@ -300,7 +258,7 @@
             <span class="auth-field-title">Password</span>
             <div class="auth-input-wrap password-input-wrap">
               <span class="auth-input-icon">🔒</span>
-              <input id="stablePassword" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" minlength="6" placeholder="យ៉ាងហោច 6 តួអក្សរ" required>
+              <input id="stablePassword" type="password" autocomplete="${signup ? 'new-password' : 'current-password'}" minlength="6" maxlength="72" placeholder="យ៉ាងហោច 6 តួអក្សរ" required>
               <button id="stablePasswordToggle" class="password-toggle" type="button" aria-label="បង្ហាញ Password" aria-pressed="false">👁️</button>
             </div>
           </label>
@@ -345,8 +303,8 @@
         return;
       }
 
-      if (password.length < 6) {
-        setStatus('❌ Password ត្រូវមានយ៉ាងហោច 6 តួអក្សរ។', 'error');
+      if (password.length < 6 || password.length > 72) {
+        setStatus('❌ Password ត្រូវមានពី 6 ដល់ 72 តួអក្សរ។', 'error');
         safeFocus(passwordInput);
         return;
       }
@@ -355,11 +313,16 @@
       submit.textContent = 'កំពុងដំណើរការ…';
       setStatus('កំពុងដំណើរការ…');
 
-      const credentials = phoneMode
-        ? { phone: normalizePhone(identifier), password }
-        : { email: identifier.toLowerCase(), password };
-
       try {
+        if (phoneMode) {
+          const session = await phoneAuthPost(signup ? 'signup' : 'login', normalizePhone(identifier), password);
+          saveSession(session);
+          setStatus(signup ? '✅ បង្កើតគណនីជោគជ័យ!' : '✅ ចូលគណនីជោគជ័យ!', 'success');
+          setTimeout(() => location.reload(), 350);
+          return;
+        }
+
+        const credentials = { email: identifier.toLowerCase(), password };
         const path = signup ? 'signup' : 'token?grant_type=password';
         const data = await authPost(path, credentials);
 
@@ -367,11 +330,6 @@
           saveSession(data);
           setStatus('✅ ជោគជ័យ!', 'success');
           setTimeout(() => location.reload(), 350);
-          return;
-        }
-
-        if (signup && phoneMode) {
-          renderOtp(credentials.phone);
           return;
         }
 
@@ -414,9 +372,15 @@
     showStableAccountModal('login');
   }, true);
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', syncAccountButton, { once: true });
-  } else {
-    syncAccountButton();
-  }
+  const initialSync = () => {
+    syncPhoneUi();
+    setTimeout(syncPhoneUi, 350);
+    setTimeout(syncPhoneUi, 1200);
+  };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initialSync, { once: true });
+  else initialSync();
+
+  window.addEventListener('load', () => setTimeout(syncPhoneUi, 100), { once: true });
+  window.addEventListener('hashchange', () => setTimeout(syncPhoneUi, 250));
 })();
