@@ -15,6 +15,18 @@ services:
       - key: PUBLIC_BASE_URL
         value: https://idramaai.onrender.com
 
+      # Protected playback gateway
+      - key: SECURE_INNER_PORT
+        value: "3101"
+      - key: STREAM_SESSION_TTL_MS
+        value: "14400000"
+      - key: WATCH_ACTIVATION_WINDOW_MS
+        value: "600000"
+      - key: MAX_STREAM_DEVICES
+        value: "1"
+      - key: MAX_STREAM_IPS
+        value: "2"
+
       # Telegram / private media storage
       - key: BOT_TOKEN
         sync: false
