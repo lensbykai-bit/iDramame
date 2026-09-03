@@ -12,10 +12,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=13" />
-  <link rel="stylesheet" href="/brand.css?v=13" />
-  <link rel="stylesheet" href="/admin-dashboard.css?v=13" />
-  <link rel="stylesheet" href="/kantumruy.css?v=13" />
+  <link rel="stylesheet" href="/styles.css?v=14" />
+  <link rel="stylesheet" href="/brand.css?v=14" />
+  <link rel="stylesheet" href="/admin-dashboard.css?v=14" />
+  <link rel="stylesheet" href="/kantumruy.css?v=14" />
 </head>
 <body class="admin-page">
   <div class="glow glow-a"></div><div class="glow glow-b"></div>
@@ -96,7 +96,7 @@
           <label>Preview / Description<textarea id="preview" class="admin-input admin-textarea" placeholder="សរសេរពិពណ៌នាខ្លីៗអំពីរឿង..."></textarea></label>
 
           <div class="upload-section">
-            <div class="upload-title"><strong>Media Files</strong><span class="muted">Cover + Full Movie</span></div>
+            <div class="upload-title"><strong>Media Files</strong><span class="muted">Cover + Trailer + Full Movie</span></div>
             <div id="mediaUploadFields" class="media-upload-grid">
               <label class="upload-card">
                 <span class="upload-emoji">🖼️</span>
@@ -106,6 +106,14 @@
                 <span id="coverStatus" class="upload-state">មិនទាន់ជ្រើសរូប</span>
               </label>
 
+              <label class="upload-card trailer-upload">
+                <span class="upload-emoji">🎞️</span>
+                <strong>Trailer Video</strong>
+                <small>Preview Free សម្រាប់អតិថិជន</small>
+                <input id="trailerFile" class="admin-input" type="file" accept="video/*" />
+                <span id="trailerStatus" class="upload-state">មិនទាន់ជ្រើស Trailer</span>
+              </label>
+
               <label class="upload-card protected-upload">
                 <span class="upload-emoji">🔐</span>
                 <strong>Full Movie</strong>
@@ -113,9 +121,6 @@
                 <input id="fullFile" class="admin-input" type="file" accept="video/*" />
                 <span id="fullStatus" class="upload-state">មិនទាន់ជ្រើស Full Movie</span>
               </label>
-
-              <input id="trailerFile" type="file" accept="video/*" hidden />
-              <span id="trailerStatus" hidden></span>
             </div>
           </div>
 
@@ -142,6 +147,6 @@
     </section>
   </main>
 
-  <script src="/admin.js?v=13" defer></script>
+  <script src="/admin.js?v=14" defer></script>
 </body>
 </html>
