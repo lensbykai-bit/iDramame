@@ -1,12 +1,12 @@
 {
   "name": "idrama-ai",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "private": true,
-  "description": "iDramaAi — Cambodia AI drama web store with Bakong KHQR, protected watch pages, Telegram catalog, and Telegram-backed media uploads",
-  "main": "app.js",
+  "description": "iDramaAi — Cambodia AI drama web store with Bakong KHQR, protected playback, Telegram-backed media, and hardened stream gateway",
+  "main": "secure-wrapper.js",
   "scripts": {
-    "start": "node app.js",
-    "dev": "node --watch app.js"
+    "start": "node secure-wrapper.js",
+    "dev": "node --watch secure-wrapper.js"
   },
   "engines": {
     "node": ">=20"
