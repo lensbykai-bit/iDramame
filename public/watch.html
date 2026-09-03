@@ -4,15 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
-  <meta name="referrer" content="same-origin">
+  <meta name="referrer" content="no-referrer">
   <meta name="theme-color" content="#050504">
   <title>Protected Watch • iDrama.ai</title>
-  <link rel="stylesheet" href="/styles.css?v=15">
+  <link rel="stylesheet" href="/styles.css?v=16">
   <style>
     *{box-sizing:border-box}html,body{background:#050504;color:#f7e7bd}body{margin:0;user-select:none;-webkit-user-select:none}
     .watch-shell{max-width:1180px;margin:0 auto;padding:24px 18px 64px}.watch-top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px}.watch-brand{font-weight:900;font-size:24px;color:#f3ce76;letter-spacing:-.03em}.watch-brand small{display:block;font-size:9px;letter-spacing:.24em;color:#9b7b39;margin-top:2px}.back-btn{border:1px solid rgba(207,153,46,.38);border-radius:12px;padding:10px 14px;color:#e8c36c;text-decoration:none;background:#0e0b07}
     .player-wrap{position:relative;border:1px solid rgba(214,159,48,.42);border-radius:20px;overflow:hidden;background:#000;box-shadow:0 28px 100px rgba(0,0,0,.75)}video{display:block;width:100%;max-height:78vh;background:#000;outline:none;-webkit-touch-callout:none}
-    .wm{position:absolute;z-index:4;pointer-events:none;white-space:nowrap;transition:top 1.4s ease,left 1.4s ease,right 1.4s ease,bottom 1.4s ease,opacity .6s ease;mix-blend-mode:screen}.wm-main{padding:7px 10px;border-radius:999px;background:rgba(0,0,0,.38);border:1px solid rgba(242,205,112,.24);font:10px ui-monospace,SFMono-Regular,monospace;color:rgba(255,230,168,.65);letter-spacing:.04em;backdrop-filter:blur(5px)}.wm-ghost{font:800 clamp(18px,3vw,38px)/1.1 Arial,sans-serif;color:rgba(243,206,118,.075);transform:rotate(-18deg);text-shadow:0 0 18px rgba(255,178,42,.08)}
+    .wm{position:absolute;z-index:4;pointer-events:none;white-space:nowrap;transition:top 1.4s ease,left 1.4s ease,right 1.4s ease,bottom 1.4s ease,opacity .6s ease;mix-blend-mode:screen}.wm-main{padding:7px 10px;border-radius:999px;background:rgba(0,0,0,.4);border:1px solid rgba(242,205,112,.26);font:10px ui-monospace,SFMono-Regular,monospace;color:rgba(255,230,168,.72);letter-spacing:.04em;backdrop-filter:blur(5px)}.wm-ghost{font:800 clamp(18px,3vw,38px)/1.1 Arial,sans-serif;color:rgba(243,206,118,.08);transform:rotate(-18deg);text-shadow:0 0 18px rgba(255,178,42,.08)}
     .secure-badge{position:absolute;left:14px;bottom:14px;z-index:5;padding:6px 9px;border-radius:999px;font:10px Arial,sans-serif;color:#a9d39e;background:rgba(4,18,4,.55);border:1px solid rgba(99,180,82,.25);pointer-events:none}
     .watch-meta{padding:18px 3px}.watch-meta h1{font-size:clamp(22px,4vw,32px);margin:0 0 7px;color:#f4d47f}.notice{color:#9d8b68;line-height:1.75;font-size:12px;max-width:880px}.watch-error{margin:80px auto;max-width:620px;text-align:center;padding:30px;border:1px solid rgba(214,159,48,.28);border-radius:20px;background:#0e0b07}.watch-error h2{color:#f2cc74}.loading{padding:70px 20px;text-align:center;color:#b99b5a}
     @media(max-width:640px){.watch-shell{padding:15px 10px 42px}.watch-top{align-items:flex-start}.watch-brand{font-size:20px}.back-btn{font-size:12px;padding:9px 10px}.player-wrap{border-radius:14px}.secure-badge{left:8px;bottom:8px;font-size:8px}.wm-main{font-size:8px}}
@@ -21,82 +21,87 @@
 <body>
 <div class="watch-shell">
   <div class="watch-top">
-    <div class="watch-brand">iDrama.ai<small>PROTECTED CINEMA</small></div>
-    <a class="back-btn" href="/">← ត្រឡប់ទៅ My Library</a>
+    <div class="watch-brand">iDrama.ai<small>ACCOUNT-BOUND PROTECTED CINEMA</small></div>
+    <a class="back-btn" href="/#library">← ត្រឡប់ទៅ My Library</a>
   </div>
-  <div id="content"><div class="loading">🔐 កំពុងបង្កើត Protected Playback Session…</div></div>
+  <div id="content"><div class="loading">🔐 កំពុងផ្ទៀងផ្ទាត់គណនី + My Library + Protected Session…</div></div>
 </div>
+<script src="/supabase-config.js?v=16"></script>
 <script>
 'use strict';
-const initialToken = new URLSearchParams(location.search).get('token') || '';
-const box = document.getElementById('content');
-let protectedVideo = null;
-let watermarkTimer = null;
+const SESSION_KEY='idramaai_supabase_session_v1';
+const initialToken=new URLSearchParams(location.search).get('token')||'';
+const box=document.getElementById('content');
+let protectedVideo=null;
+let watermarkTimer=null;
 
 function esc(v=''){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-
+function getAccountSession(){try{const s=JSON.parse(localStorage.getItem(SESSION_KEY)||'null');return s&&s.access_token?s:null;}catch{return null;}}
+function saveAccountSession(s){if(s&&s.access_token)localStorage.setItem(SESSION_KEY,JSON.stringify(s));else localStorage.removeItem(SESSION_KEY);}
+async function refreshAccountSession(session){
+  const cfg=window.IDRAMA_SUPABASE||{};
+  if(!session?.refresh_token||!cfg.url||!cfg.publishableKey)return session;
+  const expires=Number(session.expires_at||0)*1000;
+  if(expires>Date.now()+60000)return session;
+  try{
+    const r=await fetch(`${cfg.url}/auth/v1/token?grant_type=refresh_token`,{method:'POST',headers:{apikey:cfg.publishableKey,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:session.refresh_token})});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok||!d.access_token)throw new Error('refresh failed');
+    saveAccountSession(d);return d;
+  }catch{saveAccountSession(null);return null;}
+}
 function blockShortcut(e){
   const key=String(e.key||'').toLowerCase();
-  const blocked = key==='f12' || (e.ctrlKey && ['s','u','p'].includes(key)) || (e.ctrlKey && e.shiftKey && ['i','j','c'].includes(key));
+  const blocked=key==='f12'||(e.ctrlKey&&['s','u','p'].includes(key))||(e.ctrlKey&&e.shiftKey&&['i','j','c'].includes(key));
   if(blocked){e.preventDefault();e.stopPropagation();}
-  if(key==='printscreen' && protectedVideo){protectedVideo.pause();}
+  if(key==='printscreen'&&protectedVideo)protectedVideo.pause();
 }
-
 document.addEventListener('contextmenu',e=>e.preventDefault(),{capture:true});
 document.addEventListener('dragstart',e=>e.preventDefault(),{capture:true});
 document.addEventListener('keydown',blockShortcut,{capture:true});
-document.addEventListener('visibilitychange',()=>{if(document.hidden && protectedVideo && !protectedVideo.paused) protectedVideo.pause();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&protectedVideo&&!protectedVideo.paused)protectedVideo.pause();});
 
 function moveWatermarks(){
-  const wm=document.getElementById('wmMain');
-  const ghost=document.getElementById('wmGhost');
-  if(!wm||!ghost)return;
-  const points=[
-    ['5%','5%'],['64%','7%'],['8%','72%'],['65%','72%'],['34%','38%'],['52%','55%']
-  ];
-  const p=points[Math.floor(Math.random()*points.length)];
-  wm.style.left=p[0];wm.style.top=p[1];wm.style.right='auto';wm.style.bottom='auto';
-  const g=points[Math.floor(Math.random()*points.length)];
-  ghost.style.left=g[0];ghost.style.top=g[1];ghost.style.right='auto';ghost.style.bottom='auto';
+  const wm=document.getElementById('wmMain');const ghost=document.getElementById('wmGhost');if(!wm||!ghost)return;
+  const points=[['4%','5%'],['60%','7%'],['7%','69%'],['61%','70%'],['31%','34%'],['49%','53%']];
+  const p=points[Math.floor(Math.random()*points.length)];wm.style.left=p[0];wm.style.top=p[1];wm.style.right='auto';wm.style.bottom='auto';
+  const g=points[Math.floor(Math.random()*points.length)];ghost.style.left=g[0];ghost.style.top=g[1];ghost.style.right='auto';ghost.style.bottom='auto';
 }
-
 function installPlayer(d){
-  const mark=`iDrama.ai • ${esc(d.orderId||'LIBRARY')} • ${esc(d.sessionId||'SECURE')}`;
+  const viewer=esc(d.viewer||'Account verified');
+  const mark=`iDrama.ai • ${viewer} • ${esc(d.orderId||'LIBRARY')} • ${esc(d.sessionId||'SECURE')}`;
   box.innerHTML=`
     <div class="player-wrap" id="playerWrap">
       <video id="video" controls controlsList="nodownload noplaybackrate noremoteplayback" disablePictureInPicture disableRemotePlayback playsinline preload="metadata" src="${esc(d.videoUrl)}"></video>
       <div id="wmMain" class="wm wm-main">${mark}</div>
-      <div id="wmGhost" class="wm wm-ghost">iDrama.ai • ${esc(d.sessionId||'')}</div>
-      <div class="secure-badge">🔐 Protected Session</div>
+      <div id="wmGhost" class="wm wm-ghost">iDrama.ai • ${viewer}</div>
+      <div class="secure-badge">🔐 Account + Library Verified</div>
     </div>
     <div class="watch-meta">
       <h1>${esc(d.story?.title||'iDrama.ai')}</h1>
-      <div class="notice">ការចូលមើលត្រូវបានការពារដោយ Session មានកំណត់ពេល និង Watermark សម្គាល់ Session។ កុំចែករំលែក ឬបង្ហោះវីដេអូបន្តដោយគ្មានការអនុញ្ញាត។</div>
+      <div class="notice">Playback នេះភ្ជាប់ជាមួយគណនី និង My Library របស់អ្នក។ Watch URL មិនអាចចែកឲ្យគណនីផ្សេងប្រើបាន ហើយ Session ត្រូវបានភ្ជាប់ជាមួយឧបករណ៍នេះ។</div>
     </div>`;
   protectedVideo=document.getElementById('video');
-  protectedVideo.addEventListener('contextmenu',e=>e.preventDefault());
-  protectedVideo.addEventListener('dragstart',e=>e.preventDefault());
+  protectedVideo.addEventListener('contextmenu',e=>e.preventDefault());protectedVideo.addEventListener('dragstart',e=>e.preventDefault());
   try{protectedVideo.disablePictureInPicture=true;protectedVideo.disableRemotePlayback=true;}catch{}
-  moveWatermarks();
-  clearInterval(watermarkTimer);
-  watermarkTimer=setInterval(moveWatermarks,12000);
+  moveWatermarks();clearInterval(watermarkTimer);watermarkTimer=setInterval(moveWatermarks,9000);
 }
-
 async function loadAccess(){
   try{
-    const endpoint=initialToken ? '/api/access?token='+encodeURIComponent(initialToken) : '/secure/access';
-    const r=await fetch(endpoint,{cache:'no-store',credentials:'same-origin',headers:{'Accept':'application/json'}});
+    let account=await refreshAccountSession(getAccountSession());
+    if(initialToken&&!account?.access_token)throw new Error('សូម Login ជាមុន ហើយបើករឿងនេះពី My Library ម្តងទៀត។');
+    const endpoint=initialToken?'/api/access?token='+encodeURIComponent(initialToken):'/secure/access';
+    const headers={'Accept':'application/json'};
+    if(initialToken&&account?.access_token)headers.Authorization=`Bearer ${account.access_token}`;
+    const r=await fetch(endpoint,{cache:'no-store',credentials:'same-origin',headers});
     const d=await r.json().catch(()=>({}));
     if(!r.ok)throw new Error(d.error||'Access denied');
-
-    // Remove the reusable watch token from the address bar immediately after the server exchanges it for an HttpOnly session.
-    if(initialToken) history.replaceState(null,'','/watch.html');
+    if(initialToken)history.replaceState(null,'','/watch.html');
     installPlayer(d);
   }catch(e){
-    box.innerHTML=`<div class="watch-error"><h2>មិនអាចបើករឿងបាន</h2><p>${esc(e.message)}</p><a class="back-btn" href="/#library">ត្រឡប់ទៅ My Library</a></div>`;
+    box.innerHTML=`<div class="watch-error"><h2>មិនអាចបើករឿងបាន</h2><p>${esc(e.message)}</p><a class="back-btn" href="/#library">Login / ត្រឡប់ទៅ My Library</a></div>`;
   }
 }
-
 loadAccess();
 </script>
 </body>
