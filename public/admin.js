@@ -5,8 +5,8 @@ let stories = [];
 let meta = { checkout:false, testMode:false, mediaUploads:false, accountLibrary:false, series:false };
 let episodeDraft = [];
 
-function esc(v=''){ return String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
-function money(v){ return `${Number(v || 0).toLocaleString('en-US')}៛`; }
+function esc(v=''){ return String(v).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt',"'":'&#39;','"':'&quot;'}[c])); }
+function money(v){ const n=Number(v || 0); return `$${(Number.isFinite(n)?n:0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})}`; }
 function headers(){ return {'Content-Type':'application/json','x-admin-password':password}; }
 function showStatus(el, text, type=''){ if(!el) return; el.hidden=false; el.className=`status ${type}`; el.textContent=text; }
 function hideStatus(el){ if(el) el.hidden=true; }
@@ -87,7 +87,7 @@ function renderSystemStatus(){
   if($('#statBakong')) $('#statBakong').textContent = bakongReady ? 'READY' : 'NOT READY';
   if($('#statMedia')) $('#statMedia').textContent = mediaReadyState ? 'READY' : 'NOT READY';
   if($('#bakongStatus')) $('#bakongStatus').textContent = bakongReady ? '✅ Ready' : '⚠️ Not configured';
-  if($('#paymentMode')) $('#paymentMode').textContent = meta.testMode ? '🧪 Test Mode' : (bakongReady ? '💳 Real Payment' : '—');
+  if($('#paymentMode')) $('#paymentMode').textContent = meta.testMode ? '🧪 USD Test Mode' : (bakongReady ? '💵 USD • Real Payment' : '—');
   if($('#mediaStatus')) $('#mediaStatus').textContent = mediaReadyState ? '✅ Ready' : '⚠️ Not configured';
   if($('#libraryStatus')) $('#libraryStatus').textContent = libraryReady ? '✅ Ready' : '⚠️ Not ready';
   const ok = bakongReady && libraryReady;
@@ -183,7 +183,7 @@ function renderStories(){
 
 function resetForm(){
   $('#storyForm').reset();
-  $('#price').value='5000';
+  $('#price').value='1.00';
   $('#storyId').value='';
   $('#coverFileId').value='';
   $('#trailerFileId').value='';
@@ -236,6 +236,8 @@ async function saveStory(e){
   showStatus($('#formStatus'),'⏳ កំពុង Upload និងរក្សាទុក…');
   try{
     const type=currentContentType();
+    const usdPrice=Number($('#price').value);
+    if(!Number.isFinite(usdPrice) || usdPrice <= 0) throw new Error('សូមបញ្ចូលតម្លៃ USD ដែលធំជាង $0.00។');
     let coverFileId = $('#coverFileId').value.trim();
     let trailerFileId = $('#trailerFileId').value.trim();
     let fullFileId = $('#fullFileId').value.trim();
@@ -273,7 +275,7 @@ async function saveStory(e){
       content_type:type,
       title: $('#title').value.trim(),
       preview: $('#preview').value.trim(),
-      price_khr: Number($('#price').value),
+      price_khr: Math.round(usdPrice * 100) / 100,
       cover_file_id: coverFileId,
       preview_video_file_id: trailerFileId,
       full_video_file_id: type==='movie' ? fullFileId : '',
@@ -287,7 +289,7 @@ async function saveStory(e){
     if(saved.persistedToGitHub === false){
       showStatus($('#formStatus'),'⚠️ Media បាន Upload រួច ប៉ុន្តែ Story រក្សាទុកលើ Server ប៉ុណ្ណោះ។ សូមពិនិត្យ GITHUB_TOKEN។','error');
     }else{
-      showStatus($('#formStatus'),type==='series' ? `✅ រក្សាទុក Series ជោគជ័យ — ${episodes.length} ភាគ។` : '✅ រក្សាទុក Movie ជោគជ័យ។','success');
+      showStatus($('#formStatus'),type==='series' ? `✅ រក្សាទុក Series ជោគជ័យ — ${episodes.length} ភាគ • ${money(usdPrice)}។` : `✅ រក្សាទុក Movie ជោគជ័យ • ${money(usdPrice)}។`,'success');
     }
     const data=await api('/api/admin/stories');
     stories=data.stories||[];
