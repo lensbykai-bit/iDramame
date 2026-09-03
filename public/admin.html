@@ -12,11 +12,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=15" />
-  <link rel="stylesheet" href="/brand.css?v=15" />
-  <link rel="stylesheet" href="/admin-dashboard.css?v=15" />
-  <link rel="stylesheet" href="/kantumruy.css?v=15" />
-  <link rel="stylesheet" href="/series-admin.css?v=15" />
+  <link rel="stylesheet" href="/styles.css?v=16" />
+  <link rel="stylesheet" href="/brand.css?v=16" />
+  <link rel="stylesheet" href="/admin-dashboard.css?v=16" />
+  <link rel="stylesheet" href="/kantumruy.css?v=16" />
+  <link rel="stylesheet" href="/series-admin.css?v=16" />
 </head>
 <body class="admin-page">
   <div class="glow glow-a"></div><div class="glow glow-b"></div>
@@ -47,7 +47,7 @@
         <div>
           <div class="eyebrow">CONTROL CENTER</div>
           <h1>iDrama.ai Admin</h1>
-          <p class="muted dashboard-subtitle">គ្រប់គ្រងរឿងពេញ រឿងជាភាគ តម្លៃ Media និង Bakong KHQR។</p>
+          <p class="muted dashboard-subtitle">គ្រប់គ្រងរឿងពេញ រឿងជាភាគ តម្លៃ USD Media និង Bakong KHQR។</p>
         </div>
         <div class="admin-actions">
           <button id="refreshBtn" class="ghost-btn">↻ Refresh</button>
@@ -91,7 +91,7 @@
 
           <div class="form-grid form-grid-main">
             <label>ចំណងជើងរឿង<input id="title" class="admin-input" required placeholder="ឧ. រឿង អ្នកប្រម៉ាញវត្ថុបុរាណ" /></label>
-            <label>តម្លៃ (៛)<input id="price" class="admin-input" type="number" min="0" step="100" value="5000" required /></label>
+            <label>តម្លៃ ($)<input id="price" class="admin-input" type="number" min="0.01" step="0.01" value="1.00" required /></label>
           </div>
 
           <div class="content-type-box">
@@ -143,8 +143,8 @@
           </div>
 
           <div class="admin-payment-note">
-            <span>🇰🇭</span>
-            <div><strong>Bakong KHQR Checkout</strong><p>អ្នកកំណត់តម្លៃសម្រាប់រឿងទាំងមូល។ Customer បង់ម្តង → Unlock រឿងពេញ ឬភាគទាំងអស់ក្នុង Series → រក្សាទុកក្នុង My Library។</p></div>
+            <span>💵</span>
+            <div><strong>Bakong KHQR Checkout • USD</strong><p>អ្នកកំណត់តម្លៃជាដុល្លារ។ Customer បង់ម្តងជា USD → Unlock រឿងពេញ ឬភាគទាំងអស់ក្នុង Series → រក្សាទុកក្នុង My Library។</p></div>
           </div>
 
           <div class="admin-actions editor-actions">
@@ -165,6 +165,6 @@
     </section>
   </main>
 
-  <script src="/admin.js?v=15" defer></script>
+  <script src="/admin.js?v=16" defer></script>
 </body>
 </html>
