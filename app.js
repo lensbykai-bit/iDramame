@@ -28,8 +28,7 @@ if (!currentMerchant || legacyBrandNames.some((name) => name.toLowerCase() === c
 // Register the protected real KHQR generator before the main Express app starts.
 require('./khqr-admin-patch');
 
-// Customer checkout and paid viewing run on the website.
-// Telegram is used for the public Channel, discovery, and admin publishing.
-require('./server');
+// Movie + Series/Episode store server.
+require('./server-v3');
 const { startTelegramBot } = require('./telegram');
 startTelegramBot();
