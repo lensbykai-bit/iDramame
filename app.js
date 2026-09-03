@@ -25,8 +25,9 @@ if (!currentMerchant || legacyBrandNames.some((name) => name.toLowerCase() === c
   process.env.BAKONG_MERCHANT_NAME = TARGET_BRAND;
 }
 
-// Register the protected real KHQR generator before the main Express app starts.
+// Register admin KHQR + USD customer checkout routes before the main Express app starts.
 require('./khqr-admin-patch');
+require('./usd-checkout-patch');
 
 // Movie + Series/Episode store server.
 require('./server-v3');
