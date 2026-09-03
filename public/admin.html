@@ -12,10 +12,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Battambang:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/styles.css?v=14" />
-  <link rel="stylesheet" href="/brand.css?v=14" />
-  <link rel="stylesheet" href="/admin-dashboard.css?v=14" />
-  <link rel="stylesheet" href="/kantumruy.css?v=14" />
+  <link rel="stylesheet" href="/styles.css?v=15" />
+  <link rel="stylesheet" href="/brand.css?v=15" />
+  <link rel="stylesheet" href="/admin-dashboard.css?v=15" />
+  <link rel="stylesheet" href="/kantumruy.css?v=15" />
+  <link rel="stylesheet" href="/series-admin.css?v=15" />
 </head>
 <body class="admin-page">
   <div class="glow glow-a"></div><div class="glow glow-b"></div>
@@ -46,7 +47,7 @@
         <div>
           <div class="eyebrow">CONTROL CENTER</div>
           <h1>iDrama.ai Admin</h1>
-          <p class="muted dashboard-subtitle">គ្រប់គ្រងរឿង តម្លៃ Media និងពិនិត្យស្ថានភាព Bakong KHQR។</p>
+          <p class="muted dashboard-subtitle">គ្រប់គ្រងរឿងពេញ រឿងជាភាគ តម្លៃ Media និង Bakong KHQR។</p>
         </div>
         <div class="admin-actions">
           <button id="refreshBtn" class="ghost-btn">↻ Refresh</button>
@@ -57,7 +58,7 @@
 
       <section class="admin-overview" aria-label="System overview">
         <article class="overview-card"><span class="overview-icon">🎬</span><div><strong id="statStories">0</strong><span>រឿងសរុប</span></div></article>
-        <article class="overview-card"><span class="overview-icon">🔐</span><div><strong id="statFull">0</strong><span>Full Movie Ready</span></div></article>
+        <article class="overview-card"><span class="overview-icon">📺</span><div><strong id="statFull">0</strong><span>Content Ready</span></div></article>
         <article class="overview-card"><span class="overview-icon">🇰🇭</span><div><strong id="statBakong">Checking…</strong><span>Bakong KHQR</span></div></article>
         <article class="overview-card"><span class="overview-icon">☁️</span><div><strong id="statMedia">Checking…</strong><span>Media Storage</span></div></article>
       </section>
@@ -70,7 +71,7 @@
           <div class="system-item"><span>Media Upload</span><strong id="mediaStatus">កំពុងពិនិត្យ…</strong></div>
           <div class="system-item"><span>Account Library</span><strong id="libraryStatus">កំពុងពិនិត្យ…</strong></div>
         </div>
-        <p class="system-note">🔒 Admin មិនបង្ហាញ Bakong Token ឬ Secret Key ទេ។ វាបង្ហាញតែស្ថានភាព Ready/Not Ready ប៉ុណ្ណោះ។</p>
+        <p class="system-note">🔒 Full Movie និង Episode ទាំងអស់ត្រូវបានបើកតាម Protected Streaming បន្ទាប់ពីអ្នកប្រើមានសិទ្ធិក្នុង My Library។</p>
       </section>
 
       <section class="admin-panel story-editor-panel">
@@ -93,11 +94,19 @@
             <label>តម្លៃ (៛)<input id="price" class="admin-input" type="number" min="0" step="100" value="5000" required /></label>
           </div>
 
+          <div class="content-type-box">
+            <div class="content-type-copy"><strong>ប្រភេទរឿង</strong><small>ជ្រើសទម្រង់វីដេអូដែលអ្នកចង់ Upload</small></div>
+            <div class="content-type-tabs" role="radiogroup" aria-label="ប្រភេទរឿង">
+              <label class="content-type-option"><input type="radio" name="contentType" value="movie" checked><span>🎬 រឿងពេញ<br><small>Full Movie មួយ File</small></span></label>
+              <label class="content-type-option"><input type="radio" name="contentType" value="series"><span>📺 រឿងជាភាគ<br><small>ភាគ 01, 02, 03…</small></span></label>
+            </div>
+          </div>
+
           <label>Preview / Description<textarea id="preview" class="admin-input admin-textarea" placeholder="សរសេរពិពណ៌នាខ្លីៗអំពីរឿង..."></textarea></label>
 
           <div class="upload-section">
-            <div class="upload-title"><strong>Media Files</strong><span class="muted">Cover + Trailer + Full Movie</span></div>
-            <div id="mediaUploadFields" class="media-upload-grid">
+            <div class="upload-title"><strong>Media Files</strong><span id="mediaModeLabel" class="muted">Cover + Trailer + Full Movie</span></div>
+            <div id="mediaUploadFields" class="media-upload-grid shared-media-grid">
               <label class="upload-card">
                 <span class="upload-emoji">🖼️</span>
                 <strong>Cover Image</strong>
@@ -114,19 +123,28 @@
                 <span id="trailerStatus" class="upload-state">មិនទាន់ជ្រើស Trailer</span>
               </label>
 
-              <label class="upload-card protected-upload">
+              <label id="fullMovieCard" class="upload-card protected-upload">
                 <span class="upload-emoji">🔐</span>
                 <strong>Full Movie</strong>
-                <small>បើកតែក្រោយបង់ប្រាក់</small>
+                <small>សម្រាប់រឿងពេញ — បើកក្រោយទិញ</small>
                 <input id="fullFile" class="admin-input" type="file" accept="video/*" />
                 <span id="fullStatus" class="upload-state">មិនទាន់ជ្រើស Full Movie</span>
               </label>
             </div>
+
+            <section id="episodeSection" class="episode-section" hidden>
+              <div class="episode-section-head">
+                <div><span class="episode-kicker">SERIES EPISODE MANAGER</span><h3>📺 គ្រប់គ្រងភាគ</h3><p>Upload វីដេអូរបស់ភាគនីមួយៗដាច់ដោយឡែក។ អ្នកទិញរឿងម្តង នឹងអាចមើលភាគទាំងអស់។</p></div>
+                <button id="addEpisodeBtn" class="episode-add-btn" type="button">＋ បន្ថែមភាគ</button>
+              </div>
+              <div id="episodeList" class="episode-list"></div>
+              <div id="episodeEmpty" class="episode-empty">មិនទាន់មានភាគទេ។ ចុច “＋ បន្ថែមភាគ” ដើម្បីចាប់ផ្តើម។</div>
+            </section>
           </div>
 
           <div class="admin-payment-note">
             <span>🇰🇭</span>
-            <div><strong>Bakong KHQR Checkout</strong><p>អ្នកកំណត់តម្លៃនៅទីនេះ។ Customer ជ្រើសរឿង → បង់ Bakong KHQR → Server verify → Unlock Full Movie។</p></div>
+            <div><strong>Bakong KHQR Checkout</strong><p>អ្នកកំណត់តម្លៃសម្រាប់រឿងទាំងមូល។ Customer បង់ម្តង → Unlock រឿងពេញ ឬភាគទាំងអស់ក្នុង Series → រក្សាទុកក្នុង My Library។</p></div>
           </div>
 
           <div class="admin-actions editor-actions">
@@ -147,6 +165,6 @@
     </section>
   </main>
 
-  <script src="/admin.js?v=14" defer></script>
+  <script src="/admin.js?v=15" defer></script>
 </body>
 </html>
