@@ -25,16 +25,20 @@ if (!currentMerchant || legacyBrandNames.some((name) => name.toLowerCase() === c
   process.env.BAKONG_MERCHANT_NAME = TARGET_BRAND;
 }
 
-// Media transport must be patched before the Express server is loaded.
-// Cover/Poster drafts use GitHub-backed storage when available, while
-// protected Trailer/Full Movie/Episode media remains private in Telegram.
-require('./media-storage-patch');
+// Resilient media transport is installed before the Express server is loaded.
+// Cover/Poster uses GitHub. Protected video uses Telegram first, with
+// AES-256-GCM encrypted GitHub fallback when Telegram is missing/unavailable.
+const mediaStorage = require('./media-storage-patch');
 
 // Register admin KHQR + USD customer checkout routes before the main Express app starts.
 require('./khqr-admin-patch');
 require('./usd-checkout-patch');
 
-// Movie + Series/Episode store server.
+// Movie + Series/Episode store server. server-v3 captures the temporary fallback
+// media environment here so protected uploads can still work without Telegram.
 require('./server-v3');
+
+// Restore the real Telegram environment before the publishing bot is created.
+mediaStorage.restoreTelegramEnvironment();
 const { startTelegramBot } = require('./telegram');
 startTelegramBot();
