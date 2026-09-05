@@ -17,6 +17,49 @@
   const seriesHasAnyMedia = () => Array.isArray(episodeDraft) && episodeDraft.some(episodeHasMedia);
   const seriesHasIncompleteRows = () => Array.isArray(episodeDraft) && episodeDraft.some(ep => !episodeHasMedia(ep));
 
+  function applyDraftLabels() {
+    const root = document.getElementById('adminStories');
+    if (!root) return;
+
+    root.querySelectorAll('.story-ready-badge.incomplete').forEach((badge) => {
+      badge.textContent = 'DRAFT';
+      badge.setAttribute('title', 'រក្សាទុករួច — រង់ចាំ Upload វីដេអូ');
+    });
+
+    root.querySelectorAll('.admin-story-card.incomplete').forEach((card) => {
+      const tags = card.querySelector('.admin-tags');
+      if (tags && !tags.querySelector('.draft-admin-tag')) {
+        const tag = document.createElement('span');
+        tag.className = 'draft-admin-tag';
+        tag.textContent = '📝 DRAFT • រង់ចាំ Upload វីដេអូ';
+        tags.prepend(tag);
+      }
+    });
+  }
+
+  const style = document.createElement('style');
+  style.textContent = `
+    .story-ready-badge.incomplete {
+      color:#f2c96d !important;
+      border-color:rgba(226,169,55,.46) !important;
+      background:rgba(122,75,8,.20) !important;
+    }
+    .draft-admin-tag {
+      color:#f1c968 !important;
+      border-color:rgba(222,164,48,.34) !important;
+      background:rgba(87,54,7,.22) !important;
+      font-weight:700;
+    }
+  `;
+  document.head.appendChild(style);
+
+  const storiesRoot = document.getElementById('adminStories');
+  if (storiesRoot) {
+    const observer = new MutationObserver(applyDraftLabels);
+    observer.observe(storiesRoot, { childList: true, subtree: true });
+  }
+  applyDraftLabels();
+
   async function saveFlexibleDraft(event) {
     const type = currentContentType();
 
@@ -33,7 +76,7 @@
 
     const btn = event.submitter || q('#saveBtn');
     if (btn) btn.disabled = true;
-    showStatus(q('#formStatus'), '⏳ កំពុង Upload រូប/Trailer និងរក្សាទុក Draft…');
+    showStatus(q('#formStatus'), '⏳ កំពុង Upload រូប/Trailer និងរក្សាទុក DRAFT…');
 
     try {
       const title = String(q('#title')?.value || '').trim();
@@ -72,7 +115,6 @@
             }
           }
 
-          // Keep the episode row even when video will be uploaded later.
           episodes.push({
             id: String(ep.id || `ep-${String(i + 1).padStart(2, '0')}`),
             title: epTitle,
@@ -107,26 +149,25 @@
       const data = await api('/api/admin/stories');
       stories = data.stories || [];
       renderStories();
+      applyDraftLabels();
 
       if (saved.persistedToGitHub === false) {
-        showStatus(q('#formStatus'), '⚠️ Draft រក្សាទុកលើ Server ប៉ុណ្ណោះ។ សូមពិនិត្យ GITHUB_TOKEN។', 'error');
+        showStatus(q('#formStatus'), '⚠️ DRAFT រក្សាទុកលើ Server ប៉ុណ្ណោះ។ សូមពិនិត្យ GITHUB_TOKEN។', 'error');
       } else {
-        const mediaText = coverFileId ? 'Cover បានរក្សាទុក' : 'Draft បានរក្សាទុក';
         showStatus(
           q('#formStatus'),
-          `✅ ${mediaText}។ អ្នកអាចចុច ✏️ កែ ហើយ Upload ${type === 'series' ? 'Episodes' : 'Full Movie'} តាមក្រោយបាន។`,
+          `✅ DRAFT បានរក្សាទុក។ អ្នកអាចចុច ✏️ កែ ហើយ Upload ${type === 'series' ? 'Episodes' : 'Full Movie'} តាមក្រោយបាន។`,
           'success'
         );
       }
 
       if (saved.persistedToGitHub !== false) setTimeout(resetForm, 1300);
     } catch (err) {
-      showStatus(q('#formStatus'), err.message || 'មិនអាចរក្សាទុក Draft បាន។', 'error');
+      showStatus(q('#formStatus'), err.message || 'មិនអាចរក្សាទុក DRAFT បាន។', 'error');
     } finally {
       if (btn) btn.disabled = false;
     }
   }
 
-  // Capture-phase handler runs before the original submit handler.
   form.addEventListener('submit', saveFlexibleDraft, true);
 })();
