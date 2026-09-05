@@ -25,6 +25,11 @@ if (!currentMerchant || legacyBrandNames.some((name) => name.toLowerCase() === c
   process.env.BAKONG_MERCHANT_NAME = TARGET_BRAND;
 }
 
+// Media transport must be patched before the Express server is loaded.
+// Cover/Poster drafts use GitHub-backed storage when available, while
+// protected Trailer/Full Movie/Episode media remains private in Telegram.
+require('./media-storage-patch');
+
 // Register admin KHQR + USD customer checkout routes before the main Express app starts.
 require('./khqr-admin-patch');
 require('./usd-checkout-patch');
