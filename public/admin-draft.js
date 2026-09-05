@@ -1,7 +1,7 @@
 'use strict';
 
-// Draft-save extension for iDrama.ai Admin.
-// Allows Cover/Trailer first, then Full Movie/Episodes later.
+// Stable Draft-save extension for iDrama.ai Admin.
+// No MutationObserver: avoids DOM feedback loops / Page Unresponsive.
 (() => {
   const form = document.getElementById('storyForm');
   if (!form) return;
@@ -22,8 +22,10 @@
     if (!root) return;
 
     root.querySelectorAll('.story-ready-badge.incomplete').forEach((badge) => {
-      badge.textContent = 'DRAFT';
-      badge.setAttribute('title', 'រក្សាទុករួច — រង់ចាំ Upload វីដេអូ');
+      if (badge.textContent !== 'DRAFT') badge.textContent = 'DRAFT';
+      if (badge.getAttribute('title') !== 'រក្សាទុករួច — រង់ចាំ Upload វីដេអូ') {
+        badge.setAttribute('title', 'រក្សាទុករួច — រង់ចាំ Upload វីដេអូ');
+      }
     });
 
     root.querySelectorAll('.admin-story-card.incomplete').forEach((card) => {
@@ -53,11 +55,19 @@
   `;
   document.head.appendChild(style);
 
-  const storiesRoot = document.getElementById('adminStories');
-  if (storiesRoot) {
-    const observer = new MutationObserver(applyDraftLabels);
-    observer.observe(storiesRoot, { childList: true, subtree: true });
+  // Patch renderStories once instead of observing DOM mutations continuously.
+  // This keeps DRAFT labels in sync without creating mutation loops.
+  if (typeof renderStories === 'function' && !renderStories.__draftStablePatched) {
+    const baseRenderStories = renderStories;
+    const patchedRenderStories = function (...args) {
+      const result = baseRenderStories.apply(this, args);
+      applyDraftLabels();
+      return result;
+    };
+    patchedRenderStories.__draftStablePatched = true;
+    renderStories = patchedRenderStories;
   }
+
   applyDraftLabels();
 
   async function saveFlexibleDraft(event) {
@@ -149,7 +159,6 @@
       const data = await api('/api/admin/stories');
       stories = data.stories || [];
       renderStories();
-      applyDraftLabels();
 
       if (saved.persistedToGitHub === false) {
         showStatus(q('#formStatus'), '⚠️ DRAFT រក្សាទុកលើ Server ប៉ុណ្ណោះ។ សូមពិនិត្យ GITHUB_TOKEN។', 'error');
