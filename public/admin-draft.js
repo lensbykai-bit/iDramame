@@ -52,6 +52,78 @@
       background:rgba(87,54,7,.22) !important;
       font-weight:700;
     }
+
+    /* Large 9:16 poster layout for Admin catalog */
+    .admin-page .admin-story-card {
+      grid-template-columns: 220px minmax(0,1fr) auto !important;
+      gap: 22px !important;
+      align-items: start !important;
+      padding: 18px !important;
+    }
+    .admin-page .admin-thumb {
+      width: 220px !important;
+      min-width: 220px !important;
+      aspect-ratio: 9 / 16 !important;
+      min-height: 0 !important;
+      border-radius: 16px !important;
+      overflow: hidden !important;
+      background: #0d0b08 !important;
+      border: 1px solid rgba(222,169,61,.28) !important;
+      box-shadow: 0 14px 34px rgba(0,0,0,.38) !important;
+      display: grid !important;
+      place-items: center !important;
+    }
+    .admin-page .admin-thumb img {
+      width: 100% !important;
+      height: 100% !important;
+      display: block !important;
+      object-fit: cover !important;
+      object-position: center !important;
+    }
+    .admin-page .admin-story-copy {
+      padding-top: 4px;
+      min-width: 0;
+    }
+    .admin-page .story-title-line h3 {
+      font-size: clamp(21px, 2vw, 28px) !important;
+      line-height: 1.35 !important;
+    }
+    .admin-page .admin-story-copy p {
+      font-size: 14px !important;
+      line-height: 1.85 !important;
+    }
+
+    @media (max-width: 1100px) {
+      .admin-page .admin-story-card {
+        grid-template-columns: 180px minmax(0,1fr) !important;
+      }
+      .admin-page .admin-thumb {
+        width: 180px !important;
+        min-width: 180px !important;
+        aspect-ratio: 9 / 16 !important;
+      }
+      .admin-page .admin-card-actions {
+        grid-column: 1 / -1 !important;
+        flex-direction: row !important;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .admin-page .admin-story-card {
+        grid-template-columns: 1fr !important;
+      }
+      .admin-page .admin-thumb {
+        width: min(100%, 280px) !important;
+        min-width: 0 !important;
+        aspect-ratio: 9 / 16 !important;
+        margin: 0 auto !important;
+      }
+      .admin-page .admin-card-actions {
+        grid-column: auto !important;
+        flex-direction: row !important;
+        flex-wrap: wrap !important;
+      }
+    }
   `;
   document.head.appendChild(style);
 
