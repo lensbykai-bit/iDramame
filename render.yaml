@@ -4,6 +4,10 @@ services:
     runtime: node
     plan: free
     autoDeployTrigger: commit
+    buildFilter:
+      ignoredPaths:
+        - public/uploads/covers/**
+        - private-media/**
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /health
@@ -15,7 +19,7 @@ services:
       - key: PUBLIC_BASE_URL
         value: https://idramaai.onrender.com
 
-      # Account-bound protected playback gateway v2
+      # Account-bound protected playback gateway
       - key: SECURE_INNER_PORT
         value: "3101"
       - key: STREAM_SESSION_TTL_MS
@@ -33,7 +37,9 @@ services:
       - key: SUPABASE_CHECKOUT_FUNCTION
         value: https://kbanmyaqodtfoqikzwou.supabase.co/functions/v1/idrama-checkout
 
-      # Telegram / private media storage
+      # Telegram / private media storage.
+      # Protected video automatically falls back to AES-256-GCM encrypted
+      # GitHub media storage if Telegram is unavailable.
       - key: BOT_TOKEN
         sync: false
       - key: TELEGRAM_BOT_USERNAME
@@ -67,7 +73,7 @@ services:
       - key: BAKONG_TEST_MODE
         value: "false"
 
-      # Stable signing secret for checkout/watch access
+      # Stable signing/encryption secrets
       - key: ACCESS_TOKEN_SECRET
         sync: false
       - key: STREAM_SESSION_SECRET
